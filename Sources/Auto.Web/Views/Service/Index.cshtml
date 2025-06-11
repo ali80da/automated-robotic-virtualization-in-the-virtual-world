@@ -1,0 +1,107 @@
+﻿@using Auto.Core.DataMo.Common
+@using Auto.Core.DataMo.ServiceInfo
+@model List<StatusResult<ServiceStatusInfo>>
+
+@{
+    ViewData["Title"] = "وضعیت سرویس‌ها";
+}
+
+<h2>@ViewData["Title"]</h2>
+
+<table style="width:100%; border-collapse: collapse;" border="1" cellpadding="8">
+    <thead style="background-color: #f3f3f3;">
+        <tr>
+            <th>نام</th>
+            <th>آدرس</th>
+            <th>کد پاسخ</th>
+            <th>وضعیت</th>
+            <th>عملیات</th>
+        </tr>
+    </thead>
+    <tbody>
+        @if (!Model.Any())
+        {
+            <tr>
+                <td colspan="5" style="text-align:center;">سرویسی برای نمایش وجود ندارد.</td>
+            </tr>
+        }
+        else
+        {
+            foreach (var item in Model)
+            {
+                <tr>
+                    <td>@item.Data?.Name</td>
+                    <td><a href="@item.Data?.Url" target="_blank">@item.Data?.Url</a></td>
+                    <td>@item.Code</td>
+                    <td>
+                        @if (item.IsSuccess)
+                        {
+                            <span style="color:green;font-weight:bold;">فعال</span>
+                        }
+                        else if (item.IsWarning)
+                        {
+                            <span style="color:orange;font-weight:bold;">هشدار</span>
+                        }
+                        else
+                        {
+                            <span style="color:red;font-weight:bold;">خطا</span>
+                        }
+                    </td>
+                    <td>
+                        <a href="/services/status/@item.Data?.Name" target="_blank">🔄 تازه‌سازی</a> |
+                        <a href="/go/@item.Data?.Name" target="_blank">➡️ ورود</a>
+                    </td>
+                </tr>
+            }
+        }
+    </tbody>
+</table>
+
+
+@* <section class="hero is-primary is-bold">
+    <div class="hero-body">
+        <div class="container has-text-centered">
+            <h1 class="title">مرکز مدیریت سرویس‌ها</h1>
+            <h2 class="subtitle">دسترسی سریع، وضعیت زنده و مدیریت آسان سرویس‌های Docker</h2>
+        </div>
+    </div>
+</section>
+
+<section class="section">
+    <div class="container">
+        <h3 class="title is-4">سرویس‌های موجود</h3>
+        <div class="columns is-multiline">
+            <div class="column is-one-third">
+                <div class="box has-text-centered">
+                    <span class="icon is-large has-text-info">
+                        <i class="fas fa-plug fa-2x"></i>
+                    </span>
+                    <h4 class="title is-5">n8n</h4>
+                    <p>سیستم اتوماسیون قدرتمند</p>
+                    <a class="button is-link is-light mt-2" href="/go/n8n">ورود به سرویس</a>
+                </div>
+            </div>
+            <div class="column is-one-third">
+                <div class="box has-text-centered">
+                    <span class="icon is-large has-text-success">
+                        <i class="fas fa-server fa-2x"></i>
+                    </span>
+                    <h4 class="title is-5">Portainer</h4>
+                    <p>مدیریت بصری کانتینرها</p>
+                    <a class="button is-link is-light mt-2" href="/go/portainer">ورود به سرویس</a>
+                </div>
+            </div>
+            <div class="column is-one-third">
+                <div class="box has-text-centered">
+                    <span class="icon is-large has-text-danger">
+                        <i class="fas fa-chart-line fa-2x"></i>
+                    </span>
+                    <h4 class="title is-5">Grafana</h4>
+                    <p>مانیتورینگ پیشرفته</p>
+                    <a class="button is-link is-light mt-2" href="/go/grafana">ورود به سرویس</a>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+ *@

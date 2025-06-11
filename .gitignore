@@ -1,0 +1,46 @@
+## Visual Studio
+.vs/
+*.suo
+*.user
+*.userosscache
+*.sln.docstates
+
+## Build results
+[Bb]in/
+[Oo]bj/
+[Ll]og/
+artifacts/
+publish/
+
+## ASP.NET Core
+appsettings.*.local.json
+appsettings.Development.json
+secrets.json
+.env
+.env.*
+
+## NuGet
+*.nupkg
+*.snupkg
+packages/
+*.nuspec
+
+## Rider
+.idea/
+
+## Logs and temp
+*.log
+*.tmp
+*.bak
+*.cache
+*.pid
+
+## Web
+node_modules/
+wwwroot/lib/
+wwwroot/build/
+dist/
+
+## OS files
+.DS_Store
+Thumbs.db
