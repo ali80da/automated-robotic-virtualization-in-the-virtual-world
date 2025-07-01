@@ -1,6 +1,10 @@
-﻿using Auto.Core.DataMo.Common;
+﻿using System.Text;
+using Auto.Core.DataMo.Common;
 using Auto.Core.DataMo.ServiceInfo;
+using Auto.Core.Extensions.StaticExtensions;
 using Auto.Core.Services.StatusChecker;
+using Docker.DotNet;
+using Docker.DotNet.Models;
 using Microsoft.AspNetCore.Mvc;
 
 namespace Auto.Web.Controllers;
@@ -11,7 +15,6 @@ public class ServiceController(
 {
 
     private readonly IStatusCheckerService StatusService = StatusCheckerService;
-
 
     /// <summary>
     /// نمایش صفحه لیست سرویس‌ها با آخرین وضعیت‌ها.
@@ -63,10 +66,17 @@ public class ServiceController(
     /// ثبت یک سرویس جدید (از form یا ajax).
     /// </summary>
     [HttpPost]
-    public async Task<IActionResult> Register([FromForm] ServiceInfo model)
+    public async Task<IActionResult> Register([FromForm] Core.DataMo.ServiceInfo.ServiceInfo model)
     {
         await StatusService.RegisterServiceAsync(model);
         return RedirectToAction("Index");
     }
+
+
+
+
+
+
+    
 
 }
