@@ -161,7 +161,7 @@ public class ContainerController(IDockerService DockerService) : SharedAccContro
 
     #region Start Container
 
-    [HttpPost("start/{id}")]
+    [HttpPost("start-container/{id}")]
     public async Task<IActionResult> Start(string id, CancellationToken cancellationToken)
     {
         if (string.IsNullOrWhiteSpace(id)) return BadRequest("Invalid container ID");
@@ -181,7 +181,7 @@ public class ContainerController(IDockerService DockerService) : SharedAccContro
 
     #region Stop Container
 
-    [HttpPost("stop/{id}")]
+    [HttpPost("stop-container/{id}")]
     public async Task<IActionResult> Stop(string id, CancellationToken cancellationToken)
     {
         if (string.IsNullOrWhiteSpace(id)) return BadRequest("Invalid container ID");
@@ -201,7 +201,7 @@ public class ContainerController(IDockerService DockerService) : SharedAccContro
 
     #region Remove Container
 
-    [HttpPost("remove/{id}")]
+    [HttpPost("remove-container/{id}")]
     public async Task<IActionResult> Remove(string id, CancellationToken cancellationToken)
     {
         if (string.IsNullOrWhiteSpace(id)) return BadRequest("Invalid container ID");
@@ -227,7 +227,7 @@ public class ContainerController(IDockerService DockerService) : SharedAccContro
     /// Restarts a running or stopped container.
     /// </summary>
     /// <param name="id">Container ID</param>
-    [HttpPost("restart/{id}")]
+    [HttpPost("restart-container/{id}")]
     public async Task<IActionResult> Restart(string id, CancellationToken ct)
     {
         if (string.IsNullOrWhiteSpace(id))
@@ -252,7 +252,7 @@ public class ContainerController(IDockerService DockerService) : SharedAccContro
     /// Creates and starts a new container from the specified image.
     /// </summary>
     /// <param name="image">Docker image name (e.g., nginx:latest)</param>
-    [HttpPost("recreate")]
+    [HttpPost("recreate-container")]
     public async Task<IActionResult> RecreateFromImage(string image, CancellationToken ct)
     {
         if (string.IsNullOrWhiteSpace(image))
@@ -276,7 +276,7 @@ public class ContainerController(IDockerService DockerService) : SharedAccContro
     /// <summary>
     /// Deletes all stopped containers from the Docker host.
     /// </summary>
-    [HttpPost("prune")]
+    [HttpPost("prune-container")]
     public async Task<IActionResult> Prune(CancellationToken ct)
     {
         try

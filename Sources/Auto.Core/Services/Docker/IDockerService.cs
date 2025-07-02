@@ -82,6 +82,28 @@ public interface IDockerService
     Task RecreateContainerFromImageAsync(string image, CancellationToken cancellationToken = default);
 
     #endregion
+
+
+
+    #region Image Management
+
+    /// <summary>
+    /// Get a list of local Docker images.
+    /// </summary>
+    Task<IList<ImagesListResponse>> ListImagesAsync(CancellationToken cancellationToken = default);
+
+    /// <summary>
+    /// Pull a Docker image from registry.
+    /// </summary>
+    Task PullImageAsync(string imageName, CancellationToken cancellationToken = default);
+
+    /// <summary>
+    /// Delete a Docker image by ID or name.
+    /// </summary>
+    Task RemoveImageAsync(string imageIdOrName, bool force = false, CancellationToken cancellationToken = default);
+
+    #endregion
+
 }
 
 
@@ -211,4 +233,41 @@ public class DockerService : IDockerService
     }
 
     #endregion
+
+
+
+
+
+    #region Image Management
+
+    public async Task<IList<ImagesListResponse>> ListImagesAsync(CancellationToken cancellationToken = default)
+    {
+        return await DockerClient.Images.ListImagesAsync(new ImagesListParameters { All = true }, cancellationToken);
+    }
+
+    public async Task PullImageAsync(string imageName, CancellationToken cancellationToken = default)
+    {
+        var parts = imageName.Split(':');
+        var repo = parts[0];
+        var tag = parts.Length > 1 ? parts[1] : "latest";
+
+        await DockerClient.Images.CreateImageAsync(
+            new ImagesCreateParameters { FromImage = repo, Tag = tag },
+            new AuthConfig(), // بدون احراز هویت برای public registry
+            new Progress<JSONMessage>(),
+            cancellationToken
+        );
+    }
+
+    public async Task RemoveImageAsync(string imageIdOrName, bool force = false, CancellationToken cancellationToken = default)
+    {
+        await DockerClient.Images.DeleteImageAsync(
+            imageIdOrName,
+            new ImageDeleteParameters { Force = force },
+            cancellationToken
+        );
+    }
+
+    #endregion
+
 }
