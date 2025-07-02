@@ -3,6 +3,7 @@ using Docker.DotNet;
 using System.Text;
 using Microsoft.AspNetCore.Mvc;
 using Auto.Core.Extensions.StaticExtensions;
+using System.Runtime.Versioning;
 
 namespace Auto.Web.Areas.Account.Controllers;
 
@@ -14,84 +15,106 @@ public class ContainerController : SharedAccController
     /// نمایش صفحه اصلی کانتینرها.
     /// </summary>
     /// <returns></returns>
-    [HttpGet("containers")]
-    public async Task<IActionResult> Main()
+    [HttpGet("stream-monitor/{id}")]
+    public async Task<IActionResult> StreamMonitor(string id, CancellationToken cancellationToken = default)
     {
-        var containers = await DockerClient.Containers.ListContainersAsync(
-            new ContainersListParameters()
+        if (string.IsNullOrWhiteSpace(id))
+            return BadRequest("شناسه کانتینر نامعتبر است.");
+
+        Response.Headers.Append("Content-Type", "text/event-stream");
+        Response.Headers.Append("Cache-Control", "no-cache");
+        Response.Headers.Append("X-Content-Type-Options", "nosniff");
+
+        try
+        {
+            using var stream = await DockerClient.Containers.GetContainerLogsAsync(id, new ContainerLogsParameters
             {
-                Limit = 10
-            });
+                ShowStdout = true,
+                ShowStderr = true,
+                Follow = true,
+                Tail = "100"
+            }, cancellationToken);
 
-        var result = containers.Select(c => new ContainerViewModel
-        {
-            ID = c.ID,
-            Name = c.Names.FirstOrDefault()!,
-            Image = c.Image,
-            Ports = [.. c.Ports.Select(p => $"{p.IP}:{p.PublicPort} -> {p.PrivatePort}")]
-        });
+            using var reader = new StreamReader(stream, Encoding.UTF8);
 
-        return View(result);
-    }
-
-    [HttpGet("/stream-monitor/{id}")]
-    public async Task<IActionResult> StreamMonitor(string id)
-    {
-        var stream = await DockerClient.Containers.GetContainerLogsAsync(id, new ContainerLogsParameters
-        {
-            ShowStdout = true,
-            ShowStderr = true,
-            Follow = true,
-            Tail = "100"
-        });
-
-        Response.Headers.Add("Content-Type", "text/event-stream");
-        using var reader = new StreamReader(stream, Encoding.UTF8);
-        while (!reader.EndOfStream)
-        {
-            var line = await reader.ReadLineAsync();
-            if (line != null)
+            while (!reader.EndOfStream && !cancellationToken.IsCancellationRequested)
             {
-                await Response.WriteAsync($"data: {line}\n\n");
-                await Response.Body.FlushAsync();
+                var line = await reader.ReadLineAsync(cancellationToken);
+                if (!string.IsNullOrWhiteSpace(line))
+                {
+                    await Response.WriteAsync($"data: {line}\n\n", cancellationToken);
+                    await Response.Body.FlushAsync(cancellationToken);
+                }
             }
-        }
 
-        return new EmptyResult();
+            return new EmptyResult();
+        }
+        catch (OperationCanceledException)
+        {
+            return StatusCode(StatusCodes.Status499ClientClosedRequest, "⛔ درخواست توسط کلاینت لغو شد.");
+        }
+        catch (Docker.DotNet.DockerApiException ex)
+        {
+            return StatusCode(StatusCodes.Status500InternalServerError, $"❌ خطای Docker: {ex.Message}");
+        }
+        catch (Exception ex)
+        {
+            return StatusCode(StatusCodes.Status500InternalServerError, $"❗ خطای غیرمنتظره: {ex.Message}");
+        }
     }
+
+
 
 
     [HttpGet("dashboard")]
-    public async Task<IActionResult> Dashborad()
+    public async Task<IActionResult> Dashboard(CancellationToken cancellationToken = default)
     {
-        var containers = await DockerClient.Containers.ListContainersAsync(new ContainersListParameters { All = true });
-
-        var vm = new DashboardViewModel
+        try
         {
-            TotalContainers = containers.Count,
-            Running = containers.Count(c => c.State == "running"),
-            Exited = containers.Count(c => c.State == "exited"),
-            ImageUsage = containers
-                .GroupBy(c => c.Image)
-                .ToDictionary(g => g.Key, g => g.Count())
-        };
+            var containers = await DockerClient.Containers.ListContainersAsync(
+                new ContainersListParameters { All = true },
+                cancellationToken);
 
-        return View(vm);
+            var vm = new DashboardViewModel
+            {
+                TotalContainers = containers.Count,
+                Running = containers.Count(c => c.State == "running"),
+                Exited = containers.Count(c => c.State == "exited"),
+                ImageUsage = containers
+                    .GroupBy(c => c.Image)
+                    .ToDictionary(g => g.Key, g => g.Count())
+            };
+
+            return View(vm);
+        }
+        catch (OperationCanceledException)
+        {
+            return StatusCode(StatusCodes.Status503ServiceUnavailable, "درخواست لغو شد.");
+        }
+        catch (Docker.DotNet.DockerApiException ex)
+        {
+            return StatusCode(StatusCodes.Status500InternalServerError, $"خطای Docker: {ex.Message}");
+        }
+        catch (Exception ex)
+        {
+            return StatusCode(StatusCodes.Status500InternalServerError, $"خطای ناشناخته: {ex.Message}");
+        }
     }
+
 
 }
 
 public class ContainerViewModel
 {
-    public string ID { get; set; }
-    public string Name { get; set; }
-    public string Image { get; set; }
-    public List<string> Ports { get; set; }
+    public string ID { get; set; } = string.Empty;
+    public string Name { get; set; } = string.Empty;
+    public string Image { get; set; } = string.Empty;
+    public List<string>? Ports { get; set; }
 }
 public class DashboardViewModel
 {
     public int TotalContainers { get; set; }
     public int Running { get; set; }
     public int Exited { get; set; }
-    public Dictionary<string, int> ImageUsage { get; set; }
+    public Dictionary<string, int>? ImageUsage { get; set; }
 }
