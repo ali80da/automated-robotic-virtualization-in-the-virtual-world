@@ -1,20 +1,58 @@
 ﻿using Docker.DotNet.Models;
-using Docker.DotNet;
-using System.Text;
 using Microsoft.AspNetCore.Mvc;
+using System.Text;
 using Auto.Core.Extensions.StaticExtensions;
-using System.Runtime.Versioning;
+using Auto.Core.Services.Docker;
 
 namespace Auto.Web.Areas.Account.Controllers;
 
-public class ContainerController : SharedAccController
+public class ContainerController(IDockerService DockerService) : SharedAccController
 {
-    private readonly DockerClient DockerClient = DockerClientFactory.Create();
+    private readonly IDockerService DockerService = DockerService;
+
+    #region Container List
 
     /// <summary>
-    /// نمایش صفحه اصلی کانتینرها.
+    /// Show a limited list of containers.
     /// </summary>
-    /// <returns></returns>
+    [HttpGet("containers")]
+    public async Task<IActionResult> Main(CancellationToken cancellationToken = default)
+    {
+        if (cancellationToken.IsCancellationRequested)
+            return StatusCode(StatusCodes.Status503ServiceUnavailable);
+
+        try
+        {
+            var containers = await DockerService.ListContainersAsync(all: false, cancellationToken);
+            var result = containers
+                .Take(10)
+                .Select(c => new ContainerViewModel
+                {
+                    ID = c.ID,
+                    Name = c.Names.FirstOrDefault() ?? "Unnamed",
+                    Image = c.Image,
+                    Ports = c.Ports.Select(p => $"{p.IP}:{p.PublicPort} -> {p.PrivatePort}").ToList()
+                }).ToList();
+
+            return View(result);
+        }
+        catch (OperationCanceledException)
+        {
+            return StatusCode(StatusCodes.Status503ServiceUnavailable);
+        }
+        catch (Exception ex)
+        {
+            return StatusCode(StatusCodes.Status500InternalServerError, $"خطا در دریافت کانتینرها: {ex.Message}");
+        }
+    }
+
+    #endregion
+
+    #region Stream Logs
+
+    /// <summary>
+    /// Stream live container logs.
+    /// </summary>
     [HttpGet("stream-monitor/{id}")]
     public async Task<IActionResult> StreamMonitor(string id, CancellationToken cancellationToken = default)
     {
@@ -27,14 +65,7 @@ public class ContainerController : SharedAccController
 
         try
         {
-            using var stream = await DockerClient.Containers.GetContainerLogsAsync(id, new ContainerLogsParameters
-            {
-                ShowStdout = true,
-                ShowStderr = true,
-                Follow = true,
-                Tail = "100"
-            }, cancellationToken);
-
+            using var stream = await DockerService.GetContainerLogsAsync(id, follow: true, tail: "100", cancellationToken);
             using var reader = new StreamReader(stream, Encoding.UTF8);
 
             while (!reader.EndOfStream && !cancellationToken.IsCancellationRequested)
@@ -63,17 +94,19 @@ public class ContainerController : SharedAccController
         }
     }
 
+    #endregion
 
+    #region Dashboard
 
-
+    /// <summary>
+    /// Show container statistics.
+    /// </summary>
     [HttpGet("dashboard")]
     public async Task<IActionResult> Dashboard(CancellationToken cancellationToken = default)
     {
         try
         {
-            var containers = await DockerClient.Containers.ListContainersAsync(
-                new ContainersListParameters { All = true },
-                cancellationToken);
+            var containers = await DockerService.ListContainersAsync(all: true, cancellationToken);
 
             var vm = new DashboardViewModel
             {
@@ -101,8 +134,10 @@ public class ContainerController : SharedAccController
         }
     }
 
-
+    #endregion
 }
+
+#region ViewModels
 
 public class ContainerViewModel
 {
@@ -111,6 +146,7 @@ public class ContainerViewModel
     public string Image { get; set; } = string.Empty;
     public List<string>? Ports { get; set; }
 }
+
 public class DashboardViewModel
 {
     public int TotalContainers { get; set; }
@@ -118,3 +154,5 @@ public class DashboardViewModel
     public int Exited { get; set; }
     public Dictionary<string, int>? ImageUsage { get; set; }
 }
+
+#endregion

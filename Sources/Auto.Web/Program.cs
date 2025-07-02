@@ -1,4 +1,5 @@
 ﻿using Auto.Core.DataMo.ServiceInfo;
+using Auto.Core.Services.Docker;
 using Auto.Core.Services.StatusChecker;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -12,6 +13,7 @@ var builder = WebApplication.CreateBuilder(args);
 
 
     builder.Services.AddScoped<IStatusCheckerService, StatusCheckerService>();
+    builder.Services.AddSingleton<IDockerService, DockerService>();
 
 
 }
