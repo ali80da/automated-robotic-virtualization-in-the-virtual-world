@@ -54,4 +54,33 @@ public class ComposeController(IDockerService DockerService) : SharedAccControll
         return RedirectToAction("Index");
     }
 
+
+
+
+
+
+    [HttpPost("upload")]
+    public async Task<IActionResult> Upload(IFormFile yamlFile)
+    {
+        if (yamlFile == null || yamlFile.Length == 0)
+            return BadRequest("فایلی انتخاب نشده است.");
+
+        using var reader = new StreamReader(yamlFile.OpenReadStream());
+        var content = await reader.ReadToEndAsync();
+
+        return View("Index", new DockerComposeViewModel
+        {
+            YamlContent = content,
+            FileName = yamlFile.FileName
+        });
+    }
+
+
+
+
+
+
+
+
+
 }

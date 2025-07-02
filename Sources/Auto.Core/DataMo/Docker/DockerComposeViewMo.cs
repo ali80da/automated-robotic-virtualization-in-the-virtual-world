@@ -15,4 +15,9 @@ public class DockerComposeViewModel
     /// Parsed list of service names from the YAML.
     /// </summary>
     public string[]? Services { get; set; }
+
+    /// <summary>
+    /// Optional file name for saving the YAML content.
+    /// </summary>
+    public string? FileName { get; set; }
 }

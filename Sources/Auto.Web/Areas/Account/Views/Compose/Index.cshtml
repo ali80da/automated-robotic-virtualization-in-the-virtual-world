@@ -7,48 +7,59 @@
 
 <div class="container mx-auto p-6">
 
-	<h2>🧩 Docker Compose Manager</h2>
+<h2>🧩 Docker Compose Manager</h2>
 
-	<!-- Compose YAML Upload and Parse Section -->
-	<form method="post" asp-action="Parse" class="mb-4">
-		<label for="YamlContent" class="form-label fw-bold">Paste docker-compose.yml content:</label>
-		<textarea class="form-control" id="YamlContent" name="YamlContent" rows="10" placeholder="version: '3'&#10;services:&#10;  web:&#10;    image: nginx:latest">@Model.YamlContent</textarea>
-		<button type="submit" class="btn btn-primary mt-3">
-			🔍 Parse Services
-		</button>
-	</form>
-
-	<!-- Display Parsed Services -->
-	@if (Model.Services?.Any() == true)
-	{
-
-		<div class="alert alert-info">
-			<h5 class="fw-bold">🔧 Parsed Services:</h5>
-			<ul>
-				@foreach (var service in Model.Services)
-				{
-					<li>🟢 <strong>@service</strong></li>
-				}
-			</ul>
-		</div>
+<!-- Upload Compose File -->
+<form method="post" asp-action="Upload" enctype="multipart/form-data" class="mb-4">
+    <label class="form-label fw-bold">📁 Upload docker-compose.yml:</label>
+    <div class="input-group">
+        <input type="file" class="form-control" name="yamlFile" accept=".yml,.yaml" required />
+        <button class="btn btn-secondary" type="submit">📥 Upload</button>
+    </div>
+</form>
 
 
-		<!-- Actions: Run / Stop Compose -->
-		<form method="post" asp-action="Run" class="d-inline">
-			<input type="hidden" name="YamlContent" value="@Model.YamlContent" />
-			<button class="btn btn-success">
-				🚀 Run Compose
-			</button>
-		</form>
+<!-- Compose YAML Textarea Input -->
+<form method="post" asp-action="Parse" class="mb-4">
+    <label class="form-label fw-bold">✍️ Paste Compose YAML:</label>
+    <textarea name="YamlContent" rows="10" class="form-control" placeholder="version: '3'&#10;services: ...">@Model.YamlContent</textarea>
 
-		<form method="post" asp-action="Stop" class="d-inline ms-2">
-			<input type="hidden" name="YamlContent" value="@Model.YamlContent" />
-			<button class="btn btn-danger">
-				🛑 Stop Compose
-			</button>
-		</form>
+    <!-- Optional Save Name -->
+    <div class="mt-2">
+        <label class="form-label">💾 Optional File Name (e.g. myproject.yml)</label>
+        <input name="FileName" class="form-control" value="@Model.FileName" placeholder="myproject.yml" />
+    </div>
 
-	}
+    <button type="submit" class="btn btn-primary mt-3">🔍 Parse Services</button>
+</form>
 
+
+
+<!-- Parsed Services -->
+@if (Model.Services?.Any() == true)
+{
+
+    <div class="alert alert-info">
+        <strong>Services Found:</strong>
+        <ul>
+            @foreach (var s in Model.Services)
+            {
+                <li>🔧 @s</li>
+            }
+        </ul>
+    </div>
+
+
+    <form method="post" asp-action="Run" class="d-inline">
+        <input type="hidden" name="YamlContent" value="@Model.YamlContent" />
+        <button class="btn btn-success">🚀 Run</button>
+    </form>
+
+    <form method="post" asp-action="Stop" class="d-inline ms-2">
+        <input type="hidden" name="YamlContent" value="@Model.YamlContent" />
+        <button class="btn btn-danger">🛑 Stop</button>
+    </form>
+
+}
 
 </div>
