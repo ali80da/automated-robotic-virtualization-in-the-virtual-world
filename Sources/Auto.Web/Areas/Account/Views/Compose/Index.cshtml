@@ -1,0 +1,54 @@
+﻿@model DockerComposeViewModel
+@{
+	ViewData["Title"] = $"مدیریت داکر کوپوز";
+
+
+}
+
+<div class="container mx-auto p-6">
+
+	<h2>🧩 Docker Compose Manager</h2>
+
+	<!-- Compose YAML Upload and Parse Section -->
+	<form method="post" asp-action="Parse" class="mb-4">
+		<label for="YamlContent" class="form-label fw-bold">Paste docker-compose.yml content:</label>
+		<textarea class="form-control" id="YamlContent" name="YamlContent" rows="10" placeholder="version: '3'&#10;services:&#10;  web:&#10;    image: nginx:latest">@Model.YamlContent</textarea>
+		<button type="submit" class="btn btn-primary mt-3">
+			🔍 Parse Services
+		</button>
+	</form>
+
+	<!-- Display Parsed Services -->
+	@if (Model.Services?.Any() == true)
+	{
+
+		<div class="alert alert-info">
+			<h5 class="fw-bold">🔧 Parsed Services:</h5>
+			<ul>
+				@foreach (var service in Model.Services)
+				{
+					<li>🟢 <strong>@service</strong></li>
+				}
+			</ul>
+		</div>
+
+
+		<!-- Actions: Run / Stop Compose -->
+		<form method="post" asp-action="Run" class="d-inline">
+			<input type="hidden" name="YamlContent" value="@Model.YamlContent" />
+			<button class="btn btn-success">
+				🚀 Run Compose
+			</button>
+		</form>
+
+		<form method="post" asp-action="Stop" class="d-inline ms-2">
+			<input type="hidden" name="YamlContent" value="@Model.YamlContent" />
+			<button class="btn btn-danger">
+				🛑 Stop Compose
+			</button>
+		</form>
+
+	}
+
+
+</div>

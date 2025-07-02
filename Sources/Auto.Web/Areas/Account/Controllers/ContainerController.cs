@@ -15,7 +15,7 @@ public class ContainerController(IDockerService DockerService) : SharedAccContro
     /// Show a limited list of containers.
     /// </summary>
     [HttpGet("containers")]
-    public async Task<IActionResult> Main(CancellationToken cancellationToken = default)
+    public async Task<IActionResult> Containers(CancellationToken cancellationToken = default)
     {
         if (cancellationToken.IsCancellationRequested)
             return StatusCode(StatusCodes.Status503ServiceUnavailable);

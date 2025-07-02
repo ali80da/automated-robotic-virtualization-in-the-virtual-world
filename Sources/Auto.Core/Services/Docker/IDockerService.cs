@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Linq;
 using System.Text;
 using System.Text.Json;
@@ -7,6 +8,7 @@ using System.Threading.Tasks;
 using Auto.Core.Extensions.StaticExtensions;
 using Docker.DotNet;
 using Docker.DotNet.Models;
+using YamlDotNet.Serialization;
 
 namespace Auto.Core.Services.Docker;
 
@@ -147,6 +149,27 @@ public interface IDockerService
     Task ConnectContainerToNetworkAsync(string containerId, string networkId, CancellationToken cancellationToken = default);
 
     #endregion
+
+
+    #region Compose Integration
+
+    /// <summary>
+    /// Parses the docker-compose YAML and extracts service names.
+    /// </summary>
+    Task<string[]> ParseComposeServicesAsync(string yamlContent);
+
+    /// <summary>
+    /// Executes 'docker compose up -d' with the provided YAML.
+    /// </summary>
+    Task RunComposeAsync(string yamlContent, CancellationToken cancellationToken = default);
+
+    /// <summary>
+    /// Executes 'docker compose down' with the provided YAML.
+    /// </summary>
+    Task StopComposeAsync(string yamlContent, CancellationToken cancellationToken = default);
+
+    #endregion
+
 }
 
 
@@ -372,5 +395,61 @@ public class DockerService : IDockerService
     #endregion
 
 
+
+    #region Compose Integration
+
+    private const string TempPath = "/tmp/docker-compose-temp";
+
+    /// <inheritdoc/>
+    public async Task<string[]> ParseComposeServicesAsync(string yamlContent)
+    {
+        var deserializer = new DeserializerBuilder().Build();
+        var yaml = deserializer.Deserialize<Dictionary<string, object>>(yamlContent);
+
+        if (yaml.TryGetValue("services", out var services))
+        {
+            if (services is Dictionary<object, object> dict)
+                return dict.Keys.Select(k => k.ToString()).ToArray();
+        }
+
+        return [];
+    }
+
+    /// <inheritdoc/>
+    public async Task RunComposeAsync(string yamlContent, CancellationToken ct)
+    {
+        var path = await SaveTempComposeFileAsync(yamlContent);
+        await ExecuteBashAsync($"docker compose -f {path} up -d", ct);
+    }
+
+    /// <inheritdoc/>
+    public async Task StopComposeAsync(string yamlContent, CancellationToken ct)
+    {
+        var path = await SaveTempComposeFileAsync(yamlContent);
+        await ExecuteBashAsync($"docker compose -f {path} down", ct);
+    }
+
+    private async Task<string> SaveTempComposeFileAsync(string yamlContent)
+    {
+        Directory.CreateDirectory(TempPath);
+        var file = Path.Combine(TempPath, $"compose-{Guid.NewGuid():N}.yml");
+        await File.WriteAllTextAsync(file, yamlContent);
+        return file;
+    }
+
+    private async Task ExecuteBashAsync(string command, CancellationToken ct)
+    {
+        var psi = new ProcessStartInfo
+        {
+            FileName = "/bin/bash",
+            Arguments = $"-c \"{command}\"",
+            RedirectStandardOutput = true,
+            RedirectStandardError = true
+        };
+        var process = Process.Start(psi);
+        await process.WaitForExitAsync(ct);
+    }
+
+    #endregion
 
 }
