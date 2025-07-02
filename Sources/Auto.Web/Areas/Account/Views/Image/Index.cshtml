@@ -7,43 +7,49 @@
 
 }
 
-<h2>📦 Docker Images</h2>
+<div class="container mx-auto p-6">
 
-<!-- Pull Image Form -->
-<form method="post" asp-action="Pull" class="row g-2 mb-4">
-	<div class="col-md-10">
-		<input name="image" class="form-control" placeholder="e.g. nginx:latest or alpine" required />
-	</div>
-	<div class="col-md-2">
-		<button type="submit" class="btn btn-primary w-100">Pull Image</button>
-	</div>
-</form>
+	<h2>📦 Docker Images</h2>
 
-<!-- Image Table -->
-<table class="table table-bordered table-striped">
-	<thead>
-		<tr>
-			<th>Repository</th>
-			<th>Tags</th>
-			<th>Size (MB)</th>
-			<th>Actions</th>
-		</tr>
-	</thead>
-	<tbody>
-		@foreach (var img in Model)
-		{
-			var repo = img.RepoTags?.FirstOrDefault()?.Split(':')[0] ?? "<none>";
-			var tag = img.RepoTags?.FirstOrDefault()?.Split(':')[1] ?? "<none>";
+	<!-- Pull Image Form -->
+	<form method="post" asp-action="Pull" class="row g-2 mb-4">
+		<div class="col-md-10">
+			<input name="image" class="form-control" placeholder="e.g. nginx:latest or alpine" required />
+		</div>
+		<div class="col-md-2">
+			<button type="submit" class="btn btn-primary w-100">Pull Image</button>
+		</div>
+	</form>
+
+	<!-- Image Table -->
+	<table class="table table-bordered table-striped">
+		<thead>
 			<tr>
-				<td>@repo</td>
-				<td>@tag</td>
-				<td>@(img.Size / 1024 / 1024) MB</td>
-				<td>
-					<form method="post" asp-controller="Image" asp-action="Remove" asp-route-id="@img.ID" onsubmit="return confirm('Remove this image?')">
-						<button class="btn btn-danger btn-sm">Remove</button>
-					</form>
-				</td>
+				<th>Repository</th>
+				<th>Tags</th>
+				<th>Size (MB)</th>
+				<th>Actions</th>
 			</tr>
-		}
-	</tbody>
-</table>
+		</thead>
+		<tbody>
+			@foreach (var img in Model)
+			{
+				var repo = img.RepoTags?.FirstOrDefault()?.Split(':')[0] ?? "<none>";
+				var tag = img.RepoTags?.FirstOrDefault()?.Split(':')[1] ?? "<none>";
+				<tr>
+					<td>@repo</td>
+					<td>@tag</td>
+					<td>@(img.Size / 1024 / 1024) MB</td>
+					<td>
+						<form method="post" asp-controller="Image" asp-action="Remove" asp-route-id="@img.ID" onsubmit="return confirm('Remove this image?')">
+							<button class="btn btn-danger btn-sm">Remove</button>
+						</form>
+					</td>
+				</tr>
+			}
+		</tbody>
+	</table>
+
+</div>
+
+

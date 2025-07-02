@@ -1,0 +1,57 @@
+﻿@model IList<VolumeViewModel>
+
+@{
+	ViewData["Title"] = $"والیوم ها";
+}
+
+<div class="container mx-auto p-6">
+
+	<h2>📦 Docker Volumes</h2>
+
+	<!-- Form to prune dangling volumes -->
+	<form method="post" asp-action="PruneVolumes" class="mb-3">
+		<button class="btn btn-danger" onclick="return confirm('Remove all unused volumes?')">
+			Prune Dangling Volumes
+		</button>
+	</form>
+
+	<!-- Table displaying list of volumes -->
+	<table class="table table-bordered">
+		<thead>
+			<tr>
+				<th>Name</th>
+				<th>Driver</th>
+				<th>Mountpoint</th>
+				<th>Actions</th>
+			</tr>
+		</thead>
+		<tbody>
+			@foreach (var volume in Model)
+			{
+				<tr>
+					<td>@volume.Name</td>
+					<td>@volume.Driver</td>
+					<td>@volume.Mountpoint</td>
+					<td>
+						<form method="post" asp-action="RemoveVolume" asp-route-name="@volume.Name" onsubmit="return confirm('Delete this volume?')">
+							<button class="btn btn-sm btn-danger">Remove</button>
+						</form>
+					</td>
+				</tr>
+			}
+		</tbody>
+	</table>
+
+
+
+
+
+</div>
+
+
+
+
+
+
+
+

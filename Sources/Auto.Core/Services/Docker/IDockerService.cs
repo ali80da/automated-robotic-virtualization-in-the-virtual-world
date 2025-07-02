@@ -104,6 +104,49 @@ public interface IDockerService
 
     #endregion
 
+
+    #region Volume Management
+
+    /// <summary>
+    /// Retrieves a list of all Docker volumes.
+    /// </summary>
+    Task<IList<VolumeResponse>> ListVolumesAsync(CancellationToken cancellationToken = default);
+
+    /// <summary>
+    /// Removes a specific Docker volume by name.
+    /// </summary>
+    Task RemoveVolumeAsync(string volumeName, CancellationToken cancellationToken = default);
+
+    /// <summary>
+    /// Removes all unused Docker volumes (dangling).
+    /// </summary>
+    Task PruneVolumesAsync(CancellationToken cancellationToken = default);
+
+    #endregion
+
+    #region Network Management
+
+    /// <summary>
+    /// Retrieves a list of all Docker networks.
+    /// </summary>
+    Task<IList<NetworkResponse>> ListNetworksAsync(CancellationToken cancellationToken = default);
+
+    /// <summary>
+    /// Creates a new Docker network with the specified name and driver.
+    /// </summary>
+    Task CreateNetworkAsync(string name, string driver = "bridge", CancellationToken cancellationToken = default);
+
+    /// <summary>
+    /// Removes a Docker network by ID.
+    /// </summary>
+    Task RemoveNetworkAsync(string networkId, CancellationToken cancellationToken = default);
+
+    /// <summary>
+    /// Connects a container to a Docker network.
+    /// </summary>
+    Task ConnectContainerToNetworkAsync(string containerId, string networkId, CancellationToken cancellationToken = default);
+
+    #endregion
 }
 
 
@@ -269,5 +312,65 @@ public class DockerService : IDockerService
     }
 
     #endregion
+
+
+
+
+    #region Volume Management
+
+    public async Task<IList<VolumeResponse>> ListVolumesAsync(CancellationToken cancellationToken = default)
+    {
+        var result = await DockerClient.Volumes.ListAsync(new VolumesListParameters(), cancellationToken);
+        return result.Volumes;
+    }
+
+    public async Task RemoveVolumeAsync(string volumeName, CancellationToken cancellationToken = default)
+    {
+        await DockerClient.Volumes.RemoveAsync(volumeName, force: true, cancellationToken);
+    }
+
+    public async Task PruneVolumesAsync(CancellationToken cancellationToken = default)
+    {
+        await DockerClient.Volumes.PruneAsync(new VolumesPruneParameters(), cancellationToken);
+    }
+
+    #endregion
+
+    #region Network Management
+
+    public async Task<IList<NetworkResponse>> ListNetworksAsync(CancellationToken cancellationToken = default)
+    {
+        return await DockerClient.Networks.ListNetworksAsync(new NetworksListParameters(), cancellationToken);
+    }
+
+    public async Task CreateNetworkAsync(string name, string driver = "bridge", CancellationToken cancellationToken = default)
+    {
+        var createParams = new NetworksCreateParameters
+        {
+            Name = name,
+            Driver = driver
+        };
+
+        await DockerClient.Networks.CreateNetworkAsync(createParams, cancellationToken);
+    }
+
+    public async Task RemoveNetworkAsync(string networkId, CancellationToken cancellationToken = default)
+    {
+        await DockerClient.Networks.DeleteNetworkAsync(networkId, cancellationToken);
+    }
+
+    public async Task ConnectContainerToNetworkAsync(string containerId, string networkId, CancellationToken cancellationToken = default)
+    {
+        var endpointSettings = new EndpointSettings();
+        await DockerClient.Networks.ConnectNetworkAsync(networkId, new NetworkConnectParameters
+        {
+            Container = containerId,
+            EndpointConfig = endpointSettings
+        }, cancellationToken);
+    }
+
+    #endregion
+
+
 
 }

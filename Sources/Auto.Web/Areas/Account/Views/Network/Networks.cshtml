@@ -1,0 +1,55 @@
+﻿@model IList<NetworkViewModel>
+@{
+	ViewData["Title"] = $"شبکه   ها";
+}
+
+<div class="container mx-auto p-6">
+
+    <h2>🌐 Docker Networks</h2>
+
+    <!-- Form to create a new network -->
+    <form method="post" asp-action="CreateNetwork" class="row g-2 mb-4">
+        <div class="col-md-5">
+            <input name="name" class="form-control" placeholder="Network name" required />
+        </div>
+        <div class="col-md-4">
+            <select name="driver" class="form-select">
+                <option value="bridge">bridge</option>
+                <option value="host">host</option>
+                <option value="overlay">overlay</option>
+            </select>
+        </div>
+        <div class="col-md-3">
+            <button class="btn btn-primary w-100">Create Network</button>
+        </div>
+    </form>
+
+    <!-- Table displaying list of networks -->
+    <table class="table table-striped">
+        <thead>
+            <tr>
+                <th>Name</th>
+                <th>Driver</th>
+                <th>Scope</th>
+                <th>Actions</th>
+            </tr>
+        </thead>
+        <tbody>
+            @foreach (var network in Model)
+            {
+                <tr>
+                    <td>@network.Name</td>
+                    <td>@network.Driver</td>
+                    <td>@network.Scope</td>
+                    <td>
+                        <form method="post" asp-action="RemoveNetwork" asp-route-id="@network.ID" onsubmit="return confirm('Remove this network?')">
+                            <button class="btn btn-danger btn-sm">Remove</button>
+                        </form>
+                    </td>
+                </tr>
+            }
+        </tbody>
+    </table>
+
+
+</div>
