@@ -114,8 +114,14 @@ public class ContainerController(IDockerService DockerService) : SharedAccContro
                 Running = containers.Count(c => c.State == "running"),
                 Exited = containers.Count(c => c.State == "exited"),
                 ImageUsage = containers
-                    .GroupBy(c => c.Image)
-                    .ToDictionary(g => g.Key, g => g.Count())
+                            .GroupBy(c => c.Image)
+                            .ToDictionary(g => g.Key, g => g.Count()),
+                Containers = [.. containers.Select(c => new ContainerViewModel
+                {
+                    ID = c.ID,
+                    Image = c.Image,
+                    Status = c.State
+                })]
             };
 
             return View(vm);
@@ -135,6 +141,73 @@ public class ContainerController(IDockerService DockerService) : SharedAccContro
     }
 
     #endregion
+
+
+
+
+    #region Container Actions
+
+    #region Start Container
+
+    [HttpPost("start/{id}")]
+    public async Task<IActionResult> Start(string id, CancellationToken cancellationToken)
+    {
+        if (string.IsNullOrWhiteSpace(id)) return BadRequest("Invalid container ID");
+
+        try
+        {
+            await DockerService.StartContainerAsync(id, cancellationToken);
+            return RedirectToAction("Dashboard");
+        }
+        catch (Exception ex)
+        {
+            return StatusCode(500, $"Error starting container: {ex.Message}");
+        }
+    }
+
+    #endregion
+
+    #region Stop Container
+
+    [HttpPost("stop/{id}")]
+    public async Task<IActionResult> Stop(string id, CancellationToken cancellationToken)
+    {
+        if (string.IsNullOrWhiteSpace(id)) return BadRequest("Invalid container ID");
+
+        try
+        {
+            await DockerService.StopContainerAsync(id, cancellationToken);
+            return RedirectToAction("Dashboard");
+        }
+        catch (Exception ex)
+        {
+            return StatusCode(500, $"Error stopping container: {ex.Message}");
+        }
+    }
+
+    #endregion
+
+    #region Remove Container
+
+    [HttpPost("remove/{id}")]
+    public async Task<IActionResult> Remove(string id, CancellationToken cancellationToken)
+    {
+        if (string.IsNullOrWhiteSpace(id)) return BadRequest("Invalid container ID");
+
+        try
+        {
+            await DockerService.RemoveContainerAsync(id, force: true, cancellationToken);
+            return RedirectToAction("Dashboard");
+        }
+        catch (Exception ex)
+        {
+            return StatusCode(500, $"Error removing container: {ex.Message}");
+        }
+    }
+
+    #endregion
+
+    #endregion
 }
 
 #region ViewModels
@@ -143,6 +216,7 @@ public class ContainerViewModel
 {
     public string ID { get; set; } = string.Empty;
     public string Name { get; set; } = string.Empty;
+    public string Status { get; set; } = string.Empty;
     public string Image { get; set; } = string.Empty;
     public List<string>? Ports { get; set; }
 }
@@ -153,6 +227,8 @@ public class DashboardViewModel
     public int Running { get; set; }
     public int Exited { get; set; }
     public Dictionary<string, int>? ImageUsage { get; set; }
+
+    public List<ContainerViewModel> Containers { get; set; } = new();
 }
 
 #endregion

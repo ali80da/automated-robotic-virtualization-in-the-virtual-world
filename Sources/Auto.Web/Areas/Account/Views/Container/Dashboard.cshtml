@@ -1,0 +1,82 @@
+﻿@using Auto.Web.Areas.Account.Controllers
+@model DashboardViewModel
+@{
+	ViewData["Title"] = $"داشبورد";
+	var chartData = System.Text.Json.JsonSerializer.Serialize(Model.ImageUsage);
+}
+
+<div class="p-6">
+	<h2 class="text-2xl font-bold mb-4">Docker Dashboard</h2>
+	<table class="table">
+		<thead>
+			<tr>
+				<th>Container ID</th>
+				<th>Image</th>
+				<th>Status</th>
+				<th>Actions</th>
+			</tr>
+		</thead>
+		<tbody>
+			@foreach (var item in Model.Containers)
+			{
+				<tr>
+					<td>@item.ID.Substring(0, 12)</td>
+					<td>@item.Image</td>
+					<td>@item.Status</td>
+					<td>
+						<form method="post" asp-controller="Container" asp-action="Start" asp-route-id="@item.ID" style="display:inline">
+							<button class="btn btn-success btn-sm" type="submit">Start</button>
+						</form>
+						<form method="post" asp-controller="Container" asp-action="Stop" asp-route-id="@item.ID" style="display:inline">
+							<button class="btn btn-warning btn-sm" type="submit">Stop</button>
+						</form>
+						<form method="post" asp-controller="Container" asp-action="Remove" asp-route-id="@item.ID" style="display:inline">
+							<button class="btn btn-danger btn-sm" type="submit" onclick="return confirm('Are you sure?')">Remove</button>
+						</form>
+					</td>
+				</tr>
+			}
+		</tbody>
+	</table>
+
+
+	<div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-8">
+		<div class="bg-white shadow rounded p-4">
+			<h3 class="text-sm text-gray-500">Total Containers</h3>
+			<p class="text-2xl font-semibold">@Model.TotalContainers</p>
+		</div>
+		<div class="bg-green-100 shadow rounded p-4">
+			<h3 class="text-sm text-gray-600">Running</h3>
+			<p class="text-2xl font-bold text-green-800">@Model.Running</p>
+		</div>
+		<div class="bg-red-100 shadow rounded p-4">
+			<h3 class="text-sm text-gray-600">Exited</h3>
+			<p class="text-2xl font-bold text-red-800">@Model.Exited</p>
+		</div>
+	</div>
+
+	<div class="bg-white shadow rounded p-4 w-50 h-50">
+		<h3 class="text-lg font-semibold mb-2">Container Images Usage</h3>
+		<canvas id="imageChart"></canvas>
+	</div>
+</div>
+
+@section Scripts {
+
+	<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+	<script>
+		const chartData = @Html.Raw(chartData);
+		const ctx = document.getElementById('imageChart').getContext('2d');
+		new Chart(ctx, {
+			type: 'pie',
+			data: {
+				labels: Object.keys(chartData),
+				datasets: [{
+					data: Object.values(chartData),
+					backgroundColor: ['#4ade80','#60a5fa','#f87171','#facc15','#c084fc']
+				}]
+			}
+		});
+	</script>
+
+}

@@ -11,24 +11,52 @@ namespace Auto.Core.Services.Docker;
 
 public interface IDockerService
 {
+    #region Container Listing
+
     /// <summary>
-    /// List containers on the Docker host.
+    /// Lists Docker containers.
     /// </summary>
-    /// <param name="all">Whether to include stopped containers.</param>
+    /// <param name="all">Include stopped containers if true.</param>
     Task<IList<ContainerListResponse>> ListContainersAsync(bool all = false, CancellationToken cancellationToken = default);
 
-    /// <summary>
-    /// Get the logs of a container.
-    /// </summary>
-    /// <param name="containerId">The ID of the container.</param>
-    /// <param name="follow">Whether to stream logs.</param>
-    /// <param name="tail">Number of lines to show from the end of the logs.</param>
-    Task<Stream> GetContainerLogsAsync(string containerId, bool follow = true, string tail = "100", CancellationToken cancellationToken = default);
+    #endregion
+
+    #region Container Logs
 
     /// <summary>
-    /// Get detailed information about a specific container.
+    /// Streams logs from a container.
+    /// </summary>
+    Task<Stream> GetContainerLogsAsync(string containerId, bool follow = true, string tail = "100", CancellationToken cancellationToken = default);
+
+    #endregion
+
+    #region Container Inspection
+
+    /// <summary>
+    /// Retrieves detailed information about a container.
     /// </summary>
     Task<ContainerInspectResponse> InspectContainerAsync(string containerId, CancellationToken cancellationToken = default);
+
+    #endregion
+
+    #region Container Lifecycle Management
+
+    /// <summary>
+    /// Starts a stopped container.
+    /// </summary>
+    Task StartContainerAsync(string containerId, CancellationToken cancellationToken = default);
+
+    /// <summary>
+    /// Stops a running container.
+    /// </summary>
+    Task StopContainerAsync(string containerId, CancellationToken cancellationToken = default);
+
+    /// <summary>
+    /// Removes a container from the Docker host.
+    /// </summary>
+    Task RemoveContainerAsync(string containerId, bool force = false, CancellationToken cancellationToken = default);
+
+    #endregion
 }
 
 
@@ -36,11 +64,8 @@ public class DockerService : IDockerService
 {
     private readonly DockerClient DockerClient = DockerClientFactory.Create();
 
-    #region List Containers
+    #region Container Listing
 
-    /// <summary>
-    /// Retrieve a list of containers running (or stopped) on the host.
-    /// </summary>
     public async Task<IList<ContainerListResponse>> ListContainersAsync(bool all = false, CancellationToken cancellationToken = default)
     {
         return await DockerClient.Containers.ListContainersAsync(new ContainersListParameters
@@ -51,11 +76,8 @@ public class DockerService : IDockerService
 
     #endregion
 
-    #region Get Container Logs
+    #region Container Logs
 
-    /// <summary>
-    /// Retrieve the logs of a specific container as a stream.
-    /// </summary>
     public async Task<Stream> GetContainerLogsAsync(string containerId, bool follow = true, string tail = "100", CancellationToken cancellationToken = default)
     {
         if (string.IsNullOrWhiteSpace(containerId))
@@ -72,14 +94,35 @@ public class DockerService : IDockerService
 
     #endregion
 
-    #region Inspect Container
+    #region Container Inspection
 
-    /// <summary>
-    /// Inspect detailed information about a container.
-    /// </summary>
     public async Task<ContainerInspectResponse> InspectContainerAsync(string containerId, CancellationToken cancellationToken = default)
     {
         return await DockerClient.Containers.InspectContainerAsync(containerId, cancellationToken);
+    }
+
+    #endregion
+
+    #region Container Lifecycle Management
+
+    public async Task StartContainerAsync(string containerId, CancellationToken cancellationToken = default)
+    {
+        var success = await DockerClient.Containers.StartContainerAsync(containerId, new ContainerStartParameters(), cancellationToken);
+        if (!success)
+            throw new InvalidOperationException($"Failed to start container: {containerId}");
+    }
+
+    public async Task StopContainerAsync(string containerId, CancellationToken cancellationToken = default)
+    {
+        await DockerClient.Containers.StopContainerAsync(containerId, new ContainerStopParameters(), cancellationToken);
+    }
+
+    public async Task RemoveContainerAsync(string containerId, bool force = false, CancellationToken cancellationToken = default)
+    {
+        await DockerClient.Containers.RemoveContainerAsync(containerId, new ContainerRemoveParameters
+        {
+            Force = force
+        }, cancellationToken);
     }
 
     #endregion
