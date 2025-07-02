@@ -1,5 +1,4 @@
-﻿@using Auto.Web.Areas.Account.Controllers
-@model DashboardViewModel
+﻿@model DashboardViewModel
 @{
 	ViewData["Title"] = $"داشبورد";
 	var chartData = System.Text.Json.JsonSerializer.Serialize(Model.ImageUsage);
@@ -9,72 +8,122 @@
 <div class="p-6">
 	<h2 class="text-2xl font-bold mb-4">Docker Dashboard</h2>
 
-	<form method="get" class="row g-2 mb-4">
-		<div class="col-md-4">
-			<input type="text" name="search" class="form-control" placeholder="Search by name or image" value="@Model.SearchTerm" />
-		</div>
-		<div class="col-md-3">
-			<select name="status" class="form-select">
-				<option value="">All Statuses</option>
-				@foreach (var s in statuses)
-				{
-					<option value="@s" selected="@(Model.StatusFilter == s ? "selected" : null)">@s</option>
-				}
-			</select>
-		</div>
-		<div class="col-md-3">
-			<select name="image" class="form-select">
-				<option value="">All Images</option>
-				@foreach (var img in Model.AvailableImages)
-				{
-					<option value="@img" selected="@(Model.ImageFilter == img ? "selected" : null)">@img</option>
-				}
-			</select>
-		</div>
-		<div class="col-md-2">
-			<button type="submit" class="btn btn-primary w-100">Filter</button>
-		</div>
-	</form>
+    <!-- Filters -->
+    <form method="get" class="row g-2 mb-4">
+        <div class="col-md-4">
+            <input type="text" name="search" class="form-control" placeholder="Search by name or image" value="@Model.SearchTerm" />
+        </div>
+        <div class="col-md-3">
+            <select name="status" class="form-select">
+                <option value="">All Statuses</option>
+                @foreach (var s in statuses)
+                {
+                    <option value="@s" selected="@(Model.StatusFilter == s ? "selected" : null)">@s</option>
+                }
+            </select>
+        </div>
+        <div class="col-md-3">
+            <select name="image" class="form-select">
+                <option value="">All Images</option>
+                @foreach (var img in Model.AvailableImages)
+                {
+                    <option value="@img" selected="@(Model.ImageFilter == img ? "selected" : null)">@img</option>
+                }
+            </select>
+        </div>
+        <div class="col-md-2">
+            <button type="submit" class="btn btn-primary w-100">Filter</button>
+        </div>
+    </form>
 
-	<div class="mb-3">
-		<strong>Total:</strong> @Model.TotalContainers |
-		<strong>Running:</strong> @Model.Running |
-		<strong>Exited:</strong> @Model.Exited
-	</div>
+    <!-- Summary -->
+    <div class="alert alert-light border">
+        <strong>Total:</strong> @Model.TotalContainers |
+        <strong>Running:</strong> @Model.Running |
+        <strong>Exited:</strong> @Model.Exited
+    </div>
 
-	<table class="table table-bordered table-striped">
-		<thead>
-			<tr>
-				<th>ID</th>
-				<th>Name</th>
-				<th>Image</th>
-				<th>Status</th>
-				<th>Actions</th>
-			</tr>
-		</thead>
-		<tbody>
-			@foreach (var c in Model.Containers)
-			{
-				<tr>
-					<td>@c.ID.Substring(0, 12)</td>
-					<td>@c.Name</td>
-					<td>@c.Image</td>
-					<td>@c.Status</td>
-					<td>
-						<form method="post" asp-action="Start" asp-route-id="@c.ID" style="display:inline">
-							<button type="submit" class="btn btn-success btn-sm">Start</button>
-						</form>
-						<form method="post" asp-action="Stop" asp-route-id="@c.ID" style="display:inline">
-							<button type="submit" class="btn btn-warning btn-sm">Stop</button>
-						</form>
-						<form method="post" asp-action="Remove" asp-route-id="@c.ID" style="display:inline">
-							<button type="submit" class="btn btn-danger btn-sm" onclick="return confirm('Remove this container?')">Remove</button>
-						</form>
-					</td>
-				</tr>
-			}
-		</tbody>
-	</table>
+    <!-- Container Table -->
+    <table class="table table-bordered table-hover">
+        <thead class="table-dark">
+            <tr>
+                <th>ID</th>
+                <th>Name</th>
+                <th>Image</th>
+                <th>Status</th>
+                <th>Uptime</th>
+                <th>CPU</th>
+                <th>Memory</th>
+                <th>Size</th>
+                <th>Ports</th>
+                <th>Network</th>
+                <th>Actions</th>
+            </tr>
+        </thead>
+        <tbody>
+            @foreach (var c in Model.Containers)
+            {
+                <tr>
+                    <td>@c.ID.Substring(0, 12)</td>
+                    <td>@c.Name</td>
+                    <td>@c.Image</td>
+                    <td>@c.Status</td>
+                    <td>@c.Uptime</td>
+                    <td>@c.CPUUsage</td>
+                    <td>@c.MemoryUsage</td>
+                    <td>@c.Size</td>
+                    <td>
+                        @foreach (var p in c.Ports)
+                        {
+                            <div>@p</div>
+                        }
+                    </td>
+                    <td>@c.NetworkMode</td>
+                    <td>
+                        <form method="post" asp-action="Start" asp-route-id="@c.ID" class="d-inline">
+                            <button type="submit" class="btn btn-success btn-sm">Start</button>
+                        </form>
+                        <form method="post" asp-action="Stop" asp-route-id="@c.ID" class="d-inline">
+                            <button type="submit" class="btn btn-warning btn-sm">Stop</button>
+                        </form>
+                        <form method="post" asp-action="Restart" asp-route-id="@c.ID" class="d-inline">
+                            <button type="submit" class="btn btn-info btn-sm">Restart</button>
+                        </form>
+                        <form method="post" asp-action="Remove" asp-route-id="@c.ID" class="d-inline">
+                            <button type="submit" class="btn btn-danger btn-sm" onclick="return confirm('Remove this container?')">Remove</button>
+                        </form>
+                    </td>
+                </tr>
+            }
+        </tbody>
+    </table>
+
+    <!-- Recreate From Image -->
+    <div class="row mt-5">
+        <div class="col-md-6">
+            <div class="card shadow-sm border">
+                <div class="card-body">
+                    <h5 class="card-title">🛠️ Recreate Container from Image</h5>
+                    <form method="post" asp-action="RecreateFromImage">
+                        <input name="image" class="form-control mb-2" placeholder="e.g. nginx:latest" required />
+                        <button class="btn btn-primary">Recreate</button>
+                    </form>
+                </div>
+            </div>
+        </div>
+
+        <!-- Prune Stopped Containers -->
+        <div class="col-md-6">
+            <div class="card shadow-sm border">
+                <div class="card-body">
+                    <h5 class="card-title">🧹 Prune Stopped Containers</h5>
+                    <form method="post" asp-action="Prune">
+                        <button type="submit" class="btn btn-danger" onclick="return confirm('Delete all stopped containers?')">Prune Now</button>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
 
 
 	<div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-8">

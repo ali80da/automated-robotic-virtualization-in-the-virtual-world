@@ -1,9 +1,7 @@
-﻿using Docker.DotNet.Models;
-using Microsoft.AspNetCore.Mvc;
+﻿using Microsoft.AspNetCore.Mvc;
 using System.Text;
-using Auto.Core.Extensions.StaticExtensions;
 using Auto.Core.Services.Docker;
-using static System.Net.Mime.MediaTypeNames;
+using Auto.Core.DataMo.Docker;
 
 namespace Auto.Web.Areas.Account.Controllers;
 
@@ -222,34 +220,75 @@ public class ContainerController(IDockerService DockerService) : SharedAccContro
     #endregion
 
     #endregion
+
+    #region Restart Container
+
+    /// <summary>
+    /// Restarts a running or stopped container.
+    /// </summary>
+    /// <param name="id">Container ID</param>
+    [HttpPost("restart/{id}")]
+    public async Task<IActionResult> Restart(string id, CancellationToken ct)
+    {
+        if (string.IsNullOrWhiteSpace(id))
+            return BadRequest("Invalid container ID.");
+
+        try
+        {
+            await DockerService.RestartContainerAsync(id, ct);
+            return RedirectToAction("Dashboard");
+        }
+        catch (Exception ex)
+        {
+            return StatusCode(500, $"Failed to restart container: {ex.Message}");
+        }
+    }
+
+    #endregion
+
+    #region Recreate Container from Image
+
+    /// <summary>
+    /// Creates and starts a new container from the specified image.
+    /// </summary>
+    /// <param name="image">Docker image name (e.g., nginx:latest)</param>
+    [HttpPost("recreate")]
+    public async Task<IActionResult> RecreateFromImage(string image, CancellationToken ct)
+    {
+        if (string.IsNullOrWhiteSpace(image))
+            return BadRequest("Image name is required.");
+
+        try
+        {
+            await DockerService.RecreateContainerFromImageAsync(image, ct);
+            return RedirectToAction("Dashboard");
+        }
+        catch (Exception ex)
+        {
+            return StatusCode(500, $"Failed to recreate container: {ex.Message}");
+        }
+    }
+
+    #endregion
+
+    #region Prune Containers
+
+    /// <summary>
+    /// Deletes all stopped containers from the Docker host.
+    /// </summary>
+    [HttpPost("prune")]
+    public async Task<IActionResult> Prune(CancellationToken ct)
+    {
+        try
+        {
+            await DockerService.PruneContainersAsync(ct);
+            return RedirectToAction("Dashboard");
+        }
+        catch (Exception ex)
+        {
+            return StatusCode(500, $"Failed to prune containers: {ex.Message}");
+        }
+    }
+
+    #endregion
 }
-
-#region ViewModels
-
-public class ContainerViewModel
-{
-    public string ID { get; set; } = string.Empty;
-    public string Name { get; set; } = string.Empty;
-    public string Status { get; set; } = string.Empty;
-    public string Image { get; set; } = string.Empty;
-    public List<string>? Ports { get; set; }
-}
-
-public class DashboardViewModel
-{
-    public int TotalContainers { get; set; }
-    public int Running { get; set; }
-    public int Exited { get; set; }
-    public Dictionary<string, int>? ImageUsage { get; set; }
-
-    public List<ContainerViewModel> Containers { get; set; } = new();
-
-    // Filters
-    public string? SearchTerm { get; set; }
-    public string? StatusFilter { get; set; }
-    public string? ImageFilter { get; set; }
-
-    public List<string> AvailableImages { get; set; } = new();
-}
-
-#endregion
