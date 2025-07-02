@@ -3,35 +3,72 @@
 @{
 	ViewData["Title"] = $"داشبورد";
 	var chartData = System.Text.Json.JsonSerializer.Serialize(Model.ImageUsage);
+	var statuses = new[] { "running", "exited", "paused", "created" };
 }
 
 <div class="p-6">
 	<h2 class="text-2xl font-bold mb-4">Docker Dashboard</h2>
-	<table class="table">
+
+	<form method="get" class="row g-2 mb-4">
+		<div class="col-md-4">
+			<input type="text" name="search" class="form-control" placeholder="Search by name or image" value="@Model.SearchTerm" />
+		</div>
+		<div class="col-md-3">
+			<select name="status" class="form-select">
+				<option value="">All Statuses</option>
+				@foreach (var s in statuses)
+				{
+					<option value="@s" selected="@(Model.StatusFilter == s ? "selected" : null)">@s</option>
+				}
+			</select>
+		</div>
+		<div class="col-md-3">
+			<select name="image" class="form-select">
+				<option value="">All Images</option>
+				@foreach (var img in Model.AvailableImages)
+				{
+					<option value="@img" selected="@(Model.ImageFilter == img ? "selected" : null)">@img</option>
+				}
+			</select>
+		</div>
+		<div class="col-md-2">
+			<button type="submit" class="btn btn-primary w-100">Filter</button>
+		</div>
+	</form>
+
+	<div class="mb-3">
+		<strong>Total:</strong> @Model.TotalContainers |
+		<strong>Running:</strong> @Model.Running |
+		<strong>Exited:</strong> @Model.Exited
+	</div>
+
+	<table class="table table-bordered table-striped">
 		<thead>
 			<tr>
-				<th>Container ID</th>
+				<th>ID</th>
+				<th>Name</th>
 				<th>Image</th>
 				<th>Status</th>
 				<th>Actions</th>
 			</tr>
 		</thead>
 		<tbody>
-			@foreach (var item in Model.Containers)
+			@foreach (var c in Model.Containers)
 			{
 				<tr>
-					<td>@item.ID.Substring(0, 12)</td>
-					<td>@item.Image</td>
-					<td>@item.Status</td>
+					<td>@c.ID.Substring(0, 12)</td>
+					<td>@c.Name</td>
+					<td>@c.Image</td>
+					<td>@c.Status</td>
 					<td>
-						<form method="post" asp-controller="Container" asp-action="Start" asp-route-id="@item.ID" style="display:inline">
-							<button class="btn btn-success btn-sm" type="submit">Start</button>
+						<form method="post" asp-action="Start" asp-route-id="@c.ID" style="display:inline">
+							<button type="submit" class="btn btn-success btn-sm">Start</button>
 						</form>
-						<form method="post" asp-controller="Container" asp-action="Stop" asp-route-id="@item.ID" style="display:inline">
-							<button class="btn btn-warning btn-sm" type="submit">Stop</button>
+						<form method="post" asp-action="Stop" asp-route-id="@c.ID" style="display:inline">
+							<button type="submit" class="btn btn-warning btn-sm">Stop</button>
 						</form>
-						<form method="post" asp-controller="Container" asp-action="Remove" asp-route-id="@item.ID" style="display:inline">
-							<button class="btn btn-danger btn-sm" type="submit" onclick="return confirm('Are you sure?')">Remove</button>
+						<form method="post" asp-action="Remove" asp-route-id="@c.ID" style="display:inline">
+							<button type="submit" class="btn btn-danger btn-sm" onclick="return confirm('Remove this container?')">Remove</button>
 						</form>
 					</td>
 				</tr>

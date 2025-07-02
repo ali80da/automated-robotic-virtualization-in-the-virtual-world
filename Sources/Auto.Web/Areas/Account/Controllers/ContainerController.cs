@@ -3,6 +3,7 @@ using Microsoft.AspNetCore.Mvc;
 using System.Text;
 using Auto.Core.Extensions.StaticExtensions;
 using Auto.Core.Services.Docker;
+using static System.Net.Mime.MediaTypeNames;
 
 namespace Auto.Web.Areas.Account.Controllers;
 
@@ -102,11 +103,24 @@ public class ContainerController(IDockerService DockerService) : SharedAccContro
     /// Show container statistics.
     /// </summary>
     [HttpGet("dashboard")]
-    public async Task<IActionResult> Dashboard(CancellationToken cancellationToken = default)
+    public async Task<IActionResult> Dashboard(string? search, string? status, string? image, CancellationToken cancellationToken = default)
     {
         try
         {
             var containers = await DockerService.ListContainersAsync(all: true, cancellationToken);
+
+            // Filtering
+            if (!string.IsNullOrWhiteSpace(search))
+                containers = containers.Where(c =>
+                    (c.Names.Any(n => n.Contains(search, StringComparison.OrdinalIgnoreCase)) ||
+                     c.Image.Contains(search, StringComparison.OrdinalIgnoreCase))
+                ).ToList();
+
+            if (!string.IsNullOrWhiteSpace(status))
+                containers = containers.Where(c => c.State.Equals(status, StringComparison.OrdinalIgnoreCase)).ToList();
+
+            if (!string.IsNullOrWhiteSpace(image))
+                containers = containers.Where(c => c.Image == image).ToList();
 
             var vm = new DashboardViewModel
             {
@@ -229,6 +243,13 @@ public class DashboardViewModel
     public Dictionary<string, int>? ImageUsage { get; set; }
 
     public List<ContainerViewModel> Containers { get; set; } = new();
+
+    // Filters
+    public string? SearchTerm { get; set; }
+    public string? StatusFilter { get; set; }
+    public string? ImageFilter { get; set; }
+
+    public List<string> AvailableImages { get; set; } = new();
 }
 
 #endregion
