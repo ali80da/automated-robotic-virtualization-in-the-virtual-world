@@ -2,25 +2,15 @@
 
 	<PropertyGroup>
 		<TargetFramework>net8.0</TargetFramework>
-		<Nullable>enable</Nullable>
 		<ImplicitUsings>enable</ImplicitUsings>
+		<Nullable>enable</Nullable>
 	</PropertyGroup>
-
-	<ItemGroup>
-		<Folder Include="Areas\Account\Views\Shared\" />
-		<Folder Include="Views\Home\Show\" />
-		<Folder Include="wwwroot\lib\" />
-	</ItemGroup>
 
 	<ItemGroup>
 		<PackageReference Include="Microsoft.AspNetCore.SignalR" Version="1.2.0" />
 	</ItemGroup>
 	<ItemGroup>
 		<PackageReference Include="Docker.DotNet" Version="3.125.15" />
-	</ItemGroup>
-
-	<ItemGroup>
-		<ProjectReference Include="..\Auto.Core\Auto.Core.csproj" />
 	</ItemGroup>
 
 </Project>
