@@ -1,0 +1,92 @@
+﻿@model string
+@{
+	ViewData["Title"] = "Interactive Terminal";
+}
+
+@section Css {
+	<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/xterm/css/xterm.min.css" />
+	<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/xterm-addon-fit/css/xterm-addon-fit.min.css" />
+	<script src="https://cdn.jsdelivr.net/npm/xterm/lib/xterm.min.js"></script>
+	<script src="https://cdn.jsdelivr.net/npm/xterm-addon-fit/lib/xterm-addon-fit.min.js"></script>
+	<script src="https://cdnjs.cloudflare.com/ajax/libs/microsoft-signalr/7.0.5/signalr.min.js"></script>
+}
+
+<div class="p-6">
+	<h2 class="text-2xl font-bold mb-4 text-gray-800">
+		🖥 Interactive Terminal <span class="text-blue-600 font-mono">(@Model)</span>
+	</h2>
+
+	<div class="bg-yellow-50 text-yellow-800 text-sm p-3 rounded mb-4 border border-yellow-300">
+		📌 Type <code class="bg-gray-100 px-1 rounded text-red-600">exit</code> to disconnect the terminal.
+	</div>
+
+	<div id="terminal-container"
+		 class="rounded-lg overflow-hidden border border-gray-300"
+		 style="height: 600px; background-color: black;">
+		<div id="terminal" style="width: 100%; height: 100%;"></div>
+	</div>
+
+	<div id="terminal-status" class="mt-3 text-xs text-gray-600">
+		Connecting to container terminal...
+	</div>
+</div>
+
+@section Scripts {
+	<script>
+		const term = new Terminal({
+			cursorBlink: true,
+			scrollback: 1000,
+			theme: {
+				background: '#000000',
+				foreground: '#00FFB3',
+			},
+			fontSize: 14,
+			fontFamily: 'monospace'
+		});
+
+		const fitAddon = new FitAddon.FitAddon();
+		term.loadAddon(fitAddon);
+
+		term.open(document.getElementById("terminal"));
+		fitAddon.fit();
+
+		window.addEventListener("resize", () => {
+			try { fitAddon.fit(); } catch (e) { console.warn("Resize failed", e); }
+		});
+
+		const status = document.getElementById("terminal-status");
+		const connection = new signalR.HubConnectionBuilder()
+			.withUrl("/dockerhub")
+			.configureLogging(signalR.LogLevel.Information)
+			.build();
+
+		// رویدادهای ورودی از سرور
+		connection.on("ReceiveTerminalOutput", data => {
+			term.write(data);
+		});
+
+		connection.on("TerminalError", error => {
+			term.writeln(`\r\n\x1b[1;31m[ERROR] ${error}\x1b[0m`);
+			status.innerText = `❌ Connection failed: ${error}`;
+		});
+
+		connection.start().then(() => {
+			status.innerText = "✅ Connected to container terminal.";
+			connection.invoke("JoinTerminal", "@Model");
+
+			term.focus();
+
+			term.onData(data => {
+				connection.invoke("SendInputToTerminal", data);
+			});
+		}).catch(err => {
+			status.innerText = `❌ Could not connect: ${err.toString()}`;
+			term.writeln(`\r\n\x1b[1;31m[ERROR] ${err.toString()}\x1b[0m`);
+		});
+
+		connection.onclose(error => {
+			status.innerText = "⚠️ Connection closed.";
+			term.writeln(`\r\n\x1b[33m[Disconnected]\x1b[0m`);
+		});
+	</script>
+}

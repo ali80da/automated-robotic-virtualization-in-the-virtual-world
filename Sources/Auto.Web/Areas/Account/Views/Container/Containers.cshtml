@@ -16,6 +16,9 @@
                     <th class="px-6 py-4">Name</th>
                     <th class="px-6 py-4">Image</th>
                     <th class="px-6 py-4">Ports</th>
+                    <th class="px-6 py-4">Monitor</th>
+                    <th class="px-6 py-4">Dashboard</th>
+                    <th class="px-6 py-4">Terminal</th>
                 </tr>
             </thead>
             <tbody class="divide-y">
@@ -36,10 +39,13 @@
                             }
                         </td>
                         <td class="px-6 py-4">
-                            <a href="/stream-monitor/@c.ID" class="text-sm text-blue-600 underline hover:text-blue-800">View Monitor</a>
+                            <a href="/stream-monitor/@c.ID" class="text-sm text-blue-600 underline hover:text-blue-800">📺 Monitor</a>
                         </td>
                         <td class="px-6 py-4">
-                            <a href="/dashboard" class="text-blue-700 hover:underline">📊 View Dashboard</a>
+                            <a href="/dashboard" class="text-blue-700 hover:underline">📊 Dashboard</a>
+                        </td>
+                        <td class="px-6 py-4">
+                            <a href="/terminal?id=@c.ID" class="text-sm text-green-600 hover:text-green-800 font-semibold underline">🖥 Terminal</a>
                         </td>
                     </tr>
                 }
@@ -47,3 +53,11 @@
         </table>
     </div>
 </div>
+
+
+
+
+
+
+
+

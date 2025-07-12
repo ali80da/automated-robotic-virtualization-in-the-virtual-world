@@ -1,6 +1,7 @@
 ﻿using Auto.Core.DataMo.ServiceInfo;
 using Auto.Core.Services.Docker;
 using Auto.Core.Services.StatusChecker;
+using Auto.Web.Hubs;
 
 var builder = WebApplication.CreateBuilder(args);
 {
@@ -10,6 +11,7 @@ var builder = WebApplication.CreateBuilder(args);
 
 
     builder.Services.AddHttpClient();
+    builder.Services.AddSignalR();
 
 
     builder.Services.AddScoped<IStatusCheckerService, StatusCheckerService>();
@@ -76,5 +78,6 @@ var app = builder.Build();
 
     app.MapControllers();
 
+    app.MapHub<DockerHub>("/dockerhub");
 }
 app.Run();
