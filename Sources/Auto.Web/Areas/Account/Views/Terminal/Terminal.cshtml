@@ -1,92 +1,139 @@
 ﻿@model string
 @{
-	ViewData["Title"] = "Interactive Terminal";
+    ViewData["Title"] = "Interactive Terminal";
 }
 
 @section Css {
-	<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/xterm/css/xterm.min.css" />
-	<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/xterm-addon-fit/css/xterm-addon-fit.min.css" />
-	<script src="https://cdn.jsdelivr.net/npm/xterm/lib/xterm.min.js"></script>
-	<script src="https://cdn.jsdelivr.net/npm/xterm-addon-fit/lib/xterm-addon-fit.min.js"></script>
-	<script src="https://cdnjs.cloudflare.com/ajax/libs/microsoft-signalr/7.0.5/signalr.min.js"></script>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/xterm/css/xterm.min.css" />
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/xterm-addon-fit/css/xterm-addon-fit.min.css" />
+    <script src="https://cdn.jsdelivr.net/npm/xterm/lib/xterm.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/xterm-addon-fit/lib/xterm-addon-fit.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/microsoft-signalr/7.0.5/signalr.min.js"></script>
+    <style>
+        .terminal-message {
+            font-family: 'dana', ui-monospace, monospace;
+            letter-spacing: 0.03em;
+        }
+
+        .xterm-viewport::-webkit-scrollbar {
+            width: 8px;
+            background: #171c1f;
+        }
+
+        .xterm-viewport::-webkit-scrollbar-thumb {
+            background: #293a43;
+            border-radius: 10px;
+        }
+
+        .xterm-viewport {
+            scrollbar-color: #2b4053 #1a2333;
+        }
+
+        .terminal-shadow {
+            box-shadow: 0 12px 48px 0 rgba(30,90,170,0.25), 0 1.5px 4px rgba(0,0,0,0.15);
+        }
+    </style>
 }
 
-<div class="p-6">
-	<h2 class="text-2xl font-bold mb-4 text-gray-800">
-		🖥 Interactive Terminal <span class="text-blue-600 font-mono">(@Model)</span>
-	</h2>
+<div class="w-full min-h-screen flex flex-col items-center justify-center bg-gradient-to-tr from-gray-950 via-blue-950 to-gray-900 pb-10">
+    <div class="w-full max-w-5xl flex flex-col gap-4 items-center">
 
-	<div class="bg-yellow-50 text-yellow-800 text-sm p-3 rounded mb-4 border border-yellow-300">
-		📌 Type <code class="bg-gray-100 px-1 rounded text-red-600">exit</code> to disconnect the terminal.
-	</div>
+        <h2 class="text-3xl md:text-4xl font-extrabold mb-3 text-blue-300 text-center drop-shadow">
+            🖥 Interactive Terminal
+            <span class="font-mono text-base md:text-xl text-blue-500 align-middle">(@Model)</span>
+        </h2>
 
-	<div id="terminal-container"
-		 class="rounded-lg overflow-hidden border border-gray-300"
-		 style="height: 600px; background-color: black;">
-		<div id="terminal" style="width: 100%; height: 100%;"></div>
-	</div>
+        <div class="w-full flex flex-col md:flex-row items-center justify-between gap-2">
+            <div class="terminal-message bg-blue-900/30 border border-blue-700 rounded-lg text-blue-200 px-5 py-2 text-sm flex items-center gap-2 shadow mb-2">
+                <svg class="w-5 h-5 text-blue-400" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M8 17l4-4-4-4m6 8v-8" />
+                </svg>
+                <span>برای قطع ارتباط، <code class="bg-gray-900/60 px-1 rounded text-rose-400">exit</code> را تایپ کنید.</span>
+            </div>
+            <div id="terminal-status" class="terminal-message px-4 py-2 rounded text-xs text-gray-400 bg-gray-900/50 border border-gray-700 shadow">
+                در حال اتصال به ترمینال کانتینر...
+            </div>
+        </div>
 
-	<div id="terminal-status" class="mt-3 text-xs text-gray-600">
-		Connecting to container terminal...
-	</div>
+        <div id="terminal-container"
+             class="w-full min-h-[500px] md:h-[600px] max-h-[70vh] rounded-2xl border-2 border-blue-900 terminal-shadow bg-black overflow-hidden transition-all duration-300"
+             style="background: #101418;">
+            <div id="terminal" style="width:100%;height:100%;min-height:400px;"></div>
+        </div>
+    </div>
 </div>
 
 @section Scripts {
-	<script>
-		const term = new Terminal({
-			cursorBlink: true,
-			scrollback: 1000,
-			theme: {
-				background: '#000000',
-				foreground: '#00FFB3',
-			},
-			fontSize: 14,
-			fontFamily: 'monospace'
-		});
+    <script>
+        const term = new Terminal({
+            cursorBlink: true,
+            scrollback: 1200,
+            theme: {
+                background: '#101418',
+                foreground: '#70ffe0',
+                selection: '#387cf6AA',
+                cursor: '#29e9c3',
+                black: '#222b3a',
+            },
+            fontSize: 15,
+            fontFamily: 'dana, monospace, ui-monospace',
+            fontWeight: 500,
+            bellStyle: 'sound',
+            macOptionIsMeta: true,
+            windowsMode: true,
+        });
 
-		const fitAddon = new FitAddon.FitAddon();
-		term.loadAddon(fitAddon);
+        const fitAddon = new FitAddon.FitAddon();
+        term.loadAddon(fitAddon);
 
-		term.open(document.getElementById("terminal"));
-		fitAddon.fit();
+        // ریسپانسیو
+        function resizeTerminal() {
+            setTimeout(() => { try { fitAddon.fit(); } catch { } }, 120);
+        }
+        window.addEventListener("resize", resizeTerminal);
 
-		window.addEventListener("resize", () => {
-			try { fitAddon.fit(); } catch (e) { console.warn("Resize failed", e); }
-		});
+        // آماده‌سازی و نمایش
+        term.open(document.getElementById("terminal"));
+        fitAddon.fit();
 
-		const status = document.getElementById("terminal-status");
-		const connection = new signalR.HubConnectionBuilder()
-			.withUrl("/dockerhub")
-			.configureLogging(signalR.LogLevel.Information)
-			.build();
+        // SignalR اتصال
+        const status = document.getElementById("terminal-status");
+        const connection = new signalR.HubConnectionBuilder()
+            .withUrl("/dockerhub")
+            .configureLogging(signalR.LogLevel.Information)
+            .build();
 
-		// رویدادهای ورودی از سرور
-		connection.on("ReceiveTerminalOutput", data => {
-			term.write(data);
-		});
+        connection.on("ReceiveTerminalOutput", data => {
+            term.write(data);
+        });
 
-		connection.on("TerminalError", error => {
-			term.writeln(`\r\n\x1b[1;31m[ERROR] ${error}\x1b[0m`);
-			status.innerText = `❌ Connection failed: ${error}`;
-		});
+        connection.on("TerminalError", error => {
+            term.writeln(`\r\n\x1b[1;31m[ERROR] ${error}\x1b[0m`);
+            status.innerHTML = `<span class="text-red-500">❌ Connection failed:</span> ${error}`;
+        });
 
-		connection.start().then(() => {
-			status.innerText = "✅ Connected to container terminal.";
-			connection.invoke("JoinTerminal", "@Model");
+        connection.start().then(() => {
+            status.innerHTML = '<span class="text-green-400">✅ Connected to container terminal.</span>';
+            connection.invoke("JoinTerminal", "@Model");
+            term.focus();
+            term.onData(data => {
+                connection.invoke("SendInputToTerminal", data);
+            });
+        }).catch(err => {
+            status.innerHTML = `<span class="text-red-500">❌ Could not connect:</span> ${err}`;
+            term.writeln(`\r\n\x1b[1;31m[ERROR] ${err}\x1b[0m`);
+        });
 
-			term.focus();
+        connection.onclose(error => {
+            status.innerHTML = "<span class='text-yellow-400'>⚠️ Connection closed.</span>";
+            term.writeln(`\r\n\x1b[33m[Disconnected]\x1b[0m`);
+        });
 
-			term.onData(data => {
-				connection.invoke("SendInputToTerminal", data);
-			});
-		}).catch(err => {
-			status.innerText = `❌ Could not connect: ${err.toString()}`;
-			term.writeln(`\r\n\x1b[1;31m[ERROR] ${err.toString()}\x1b[0m`);
-		});
+        // اولین رندر
+        setTimeout(resizeTerminal, 300);
 
-		connection.onclose(error => {
-			status.innerText = "⚠️ Connection closed.";
-			term.writeln(`\r\n\x1b[33m[Disconnected]\x1b[0m`);
-		});
-	</script>
+        // فوکوس خودکار
+        document.getElementById('terminal-container').onclick = () => term.focus();
+    </script>
 }
+
