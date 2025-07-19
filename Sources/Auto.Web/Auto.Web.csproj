@@ -7,9 +7,15 @@
 	</PropertyGroup>
 
 	<ItemGroup>
+	  <Content Include="Tailwind\base.css">
+	    <ExcludeFromSingleFile>true</ExcludeFromSingleFile>
+	    <CopyToPublishDirectory>PreserveNewest</CopyToPublishDirectory>
+	  </Content>
+	</ItemGroup>
+
+	<ItemGroup>
 		<Folder Include="Areas\Account\Views\Shared\" />
 		<Folder Include="Views\Home\Show\" />
-		<Folder Include="wwwroot\lib\" />
 	</ItemGroup>
 
 	<ItemGroup>
