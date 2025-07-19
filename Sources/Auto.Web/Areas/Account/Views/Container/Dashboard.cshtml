@@ -1,156 +1,188 @@
 ﻿@model DashboardViewModel
 @{
-	ViewData["Title"] = $"داشبورد";
+	ViewData["Title"] = "داشبورد";
 	var chartData = System.Text.Json.JsonSerializer.Serialize(Model.ImageUsage);
 	var statuses = new[] { "running", "exited", "paused", "created" };
 }
 
-<div class="p-6">
-	<h2 class="text-2xl font-bold mb-4">Docker Dashboard</h2>
+<div class="w-full min-h-screen bg-gray-950 pb-20">
+	<div class="max-w-7xl mx-auto px-2 sm:px-6">
 
-    <!-- Filters -->
-    <form method="get" class="row g-2 mb-4">
-        <div class="col-md-4">
-            <input type="text" name="search" class="form-control" placeholder="Search by name or image" value="@Model.SearchTerm" />
-        </div>
-        <div class="col-md-3">
-            <select name="status" class="form-select">
-                <option value="">All Statuses</option>
-                @foreach (var s in statuses)
-                {
-                    <option value="@s" selected="@(Model.StatusFilter == s ? "selected" : null)">@s</option>
-                }
-            </select>
-        </div>
-        <div class="col-md-3">
-            <select name="image" class="form-select">
-                <option value="">All Images</option>
-                @foreach (var img in Model.AvailableImages)
-                {
-                    <option value="@img" selected="@(Model.ImageFilter == img ? "selected" : null)">@img</option>
-                }
-            </select>
-        </div>
-        <div class="col-md-2">
-            <button type="submit" class="btn btn-primary w-100">Filter</button>
-        </div>
-    </form>
+		<!-- پیام موفقیت -->
+		@if (TempData["Success"] != null)
+		{
+			<div class="fixed bottom-8 right-8 z-50 bg-green-600/95 text-white px-6 py-3 rounded-xl shadow-2xl flex items-center gap-2 animate-fade-in border border-green-500"
+				 style="animation: fade-in .5s cubic-bezier(.6,.7,.4,1)">
+				<svg class="w-6 h-6 text-white animate-bounce" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+					<path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7" />
+				</svg>
+				<span>@TempData["Success"]</span>
+			</div>
+		}
 
-    <!-- Summary -->
-    <div class="alert alert-light border">
-        <strong>Total:</strong> @Model.TotalContainers |
-        <strong>Running:</strong> @Model.Running |
-        <strong>Exited:</strong> @Model.Exited
-    </div>
-
-    <!-- Container Table -->
-    <table class="table table-bordered table-hover">
-        <thead class="table-dark">
-            <tr>
-                <th>ID</th>
-                <th>Name</th>
-                <th>Image</th>
-                <th>Status</th>
-                <th>Uptime</th>
-                <th>CPU</th>
-                <th>Memory</th>
-                <th>Size</th>
-                <th>Ports</th>
-                <th>Network</th>
-                <th>Actions</th>
-            </tr>
-        </thead>
-        <tbody>
-            @foreach (var c in Model.Containers)
-            {
-                <tr>
-                    <td>@c.ID.Substring(0, 12)</td>
-                    <td>@c.Name</td>
-                    <td>@c.Image</td>
-                    <td>@c.Status</td>
-                    <td>@c.Uptime</td>
-                    <td>@c.CPUUsage</td>
-                    <td>@c.MemoryUsage</td>
-                    <td>@c.Size</td>
-                    <td>
-                        @foreach (var p in c.Ports)
-                        {
-                            <div>@p</div>
-                        }
-                    </td>
-                    <td>@c.NetworkMode</td>
-                    <td>
-                        <form method="post" asp-action="Start" asp-route-id="@c.ID" class="d-inline">
-                            <button type="submit" class="btn btn-success btn-sm">Start</button>
-                        </form>
-                        <form method="post" asp-action="Stop" asp-route-id="@c.ID" class="d-inline">
-                            <button type="submit" class="btn btn-warning btn-sm">Stop</button>
-                        </form>
-                        <form method="post" asp-action="Restart" asp-route-id="@c.ID" class="d-inline">
-                            <button type="submit" class="btn btn-info btn-sm">Restart</button>
-                        </form>
-                        <form method="post" asp-action="Remove" asp-route-id="@c.ID" class="d-inline">
-                            <button type="submit" class="btn btn-danger btn-sm" onclick="return confirm('Remove this container?')">Remove</button>
-                        </form>
-                    </td>
-                </tr>
-            }
-        </tbody>
-    </table>
-
-    <!-- Recreate From Image -->
-    <div class="row mt-5">
-        <div class="col-md-6">
-            <div class="card shadow-sm border">
-                <div class="card-body">
-                    <h5 class="card-title">🛠️ Recreate Container from Image</h5>
-                    <form method="post" asp-action="RecreateFromImage">
-                        <input name="image" class="form-control mb-2" placeholder="e.g. nginx:latest" required />
-                        <button class="btn btn-primary">Recreate</button>
-                    </form>
-                </div>
-            </div>
-        </div>
-
-        <!-- Prune Stopped Containers -->
-        <div class="col-md-6">
-            <div class="card shadow-sm border">
-                <div class="card-body">
-                    <h5 class="card-title">🧹 Prune Stopped Containers</h5>
-                    <form method="post" asp-action="Prune">
-                        <button type="submit" class="btn btn-danger" onclick="return confirm('Delete all stopped containers?')">Prune Now</button>
-                    </form>
-                </div>
-            </div>
-        </div>
-    </div>
-
-
-	<div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-8">
-		<div class="bg-white shadow rounded p-4">
-			<h3 class="text-sm text-gray-500">Total Containers</h3>
-			<p class="text-2xl font-semibold">@Model.TotalContainers</p>
+		<!-- آمار سریع -->
+		<div class="flex flex-col md:flex-row gap-7 mt-14 mb-10">
+			<div class="flex-1 bg-gradient-to-br from-gray-900 via-blue-950 to-gray-900 rounded-3xl shadow-xl p-8 flex flex-col items-center border-t-4 border-blue-600 hover:scale-105 hover:shadow-2xl transition-all duration-300 animate-grow">
+				<span class="text-blue-200 text-lg mb-2 tracking-widest">کل کانتینرها</span>
+				<span class="text-5xl font-black text-blue-400 drop-shadow-xl animate-grow">@Model.TotalContainers</span>
+			</div>
+			<div class="flex-1 bg-gradient-to-br from-gray-900 via-green-900 to-gray-900 rounded-3xl shadow-xl p-8 flex flex-col items-center border-t-4 border-green-500 hover:scale-105 hover:shadow-2xl transition-all duration-300 animate-grow delay-75">
+				<span class="text-green-200 text-lg mb-2 tracking-widest">در حال اجرا</span>
+				<span class="text-5xl font-black text-green-300 drop-shadow-xl animate-grow">@Model.Running</span>
+			</div>
+			<div class="flex-1 bg-gradient-to-br from-gray-900 via-red-900 to-gray-900 rounded-3xl shadow-xl p-8 flex flex-col items-center border-t-4 border-red-500 hover:scale-105 hover:shadow-2xl transition-all duration-300 animate-grow delay-150">
+				<span class="text-red-200 text-lg mb-2 tracking-widest">خارج شده</span>
+				<span class="text-5xl font-black text-red-300 drop-shadow-xl animate-grow">@Model.Exited</span>
+			</div>
 		</div>
-		<div class="bg-green-100 shadow rounded p-4">
-			<h3 class="text-sm text-gray-600">Running</h3>
-			<p class="text-2xl font-bold text-green-800">@Model.Running</p>
-		</div>
-		<div class="bg-red-100 shadow rounded p-4">
-			<h3 class="text-sm text-gray-600">Exited</h3>
-			<p class="text-2xl font-bold text-red-800">@Model.Exited</p>
-		</div>
-	</div>
 
-	<div class="bg-white shadow rounded p-4 w-50 h-50">
-		<h3 class="text-lg font-semibold mb-2">Container Images Usage</h3>
-		<canvas id="imageChart"></canvas>
+		<!-- فیلترها -->
+		<form method="get" class="grid grid-cols-1 sm:grid-cols-4 gap-3 mb-12 max-w-4xl mx-auto items-end bg-gradient-to-tr from-gray-900 via-blue-950 to-gray-900 p-6 rounded-2xl shadow border border-blue-900">
+			<div class="relative">
+				<svg class="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-blue-500" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+					<circle cx="11" cy="11" r="8"></circle>
+					<path d="M21 21l-4.35-4.35"></path>
+				</svg>
+				<input type="text" name="search"
+					   class="w-full rounded-xl border border-blue-900 px-10 py-2 focus:ring-2 focus:ring-blue-600 bg-gray-900/80 text-blue-100 placeholder:text-blue-400"
+					   placeholder="جستجو براساس نام یا ایمیج..." value="@Model.SearchTerm" />
+			</div>
+			<div>
+				<select name="status"
+						class="w-full rounded-xl border border-blue-900 px-4 py-2 focus:ring-2 focus:ring-blue-600 bg-gray-900/80 text-blue-100">
+					<option value="">همه وضعیت‌ها</option>
+					@foreach (var s in statuses)
+					{
+						<option value="@s" selected="@(Model.StatusFilter == s ? "selected" : null)">@s</option>
+					}
+				</select>
+			</div>
+			<div>
+				<select name="image"
+						class="w-full rounded-xl border border-blue-900 px-4 py-2 focus:ring-2 focus:ring-blue-600 bg-gray-900/80 text-blue-100">
+					<option value="">همه ایمیج‌ها</option>
+					@foreach (var img in Model.AvailableImages)
+					{
+						<option value="@img" selected="@(Model.ImageFilter == img ? "selected" : null)">@img</option>
+					}
+				</select>
+			</div>
+			<div>
+				<button type="submit"
+						class="w-full px-4 py-2 bg-blue-800 text-white font-bold rounded-xl shadow-lg hover:bg-blue-900 transition">
+					اعمال فیلتر
+				</button>
+			</div>
+		</form>
+
+		<!-- جدول -->
+		<div class="overflow-x-auto bg-gradient-to-br from-gray-900 via-blue-950 to-gray-900 rounded-3xl shadow-2xl border border-blue-900 mb-14">
+			<table class="min-w-full divide-y divide-blue-900 text-xs md:text-base">
+				<thead class="sticky top-0 z-10 bg-gradient-to-b from-blue-900/80 via-blue-900/70 to-transparent text-blue-100 uppercase font-bold tracking-wider shadow">
+					<tr>
+						<th class="px-4 py-3">ID</th>
+						<th class="px-4 py-3">Name</th>
+						<th class="px-4 py-3">Image</th>
+						<th class="px-4 py-3">Status</th>
+						<th class="px-4 py-3">Uptime</th>
+						<th class="px-4 py-3">CPU</th>
+						<th class="px-4 py-3">Memory</th>
+						<th class="px-4 py-3">Size</th>
+						<th class="px-4 py-3">Ports</th>
+						<th class="px-4 py-3">Network</th>
+						<th class="px-4 py-3">Actions</th>
+					</tr>
+				</thead>
+				<tbody class="divide-y divide-blue-950 font-medium">
+					@if (!Model.Containers.Any())
+					{
+						<tr>
+							<td colspan="11" class="text-center py-12 text-blue-800 text-lg">هیچ کانتینری پیدا نشد.</td>
+						</tr>
+					}
+					@foreach (var c in Model.Containers)
+					{
+						<tr class="hover:bg-blue-900/30 hover:shadow-xl group transition-all duration-100 border-l-4 border-transparent hover:border-blue-600">
+							<td class="px-4 py-3 text-xs text-blue-200">@c.ID.Substring(0, 12)</td>
+							<td class="px-4 py-3 font-bold text-blue-200">@c.Name</td>
+							<td class="px-4 py-3 text-blue-100">@c.Image</td>
+							<td class="px-4 py-3">@c.Status</td>
+							<td class="px-4 py-3">@c.Uptime</td>
+							<td class="px-4 py-3">@c.CPUUsage</td>
+							<td class="px-4 py-3">@c.MemoryUsage</td>
+							<td class="px-4 py-3">@c.Size</td>
+							<td class="px-4 py-3">
+								@foreach (var p in c.Ports)
+								{
+									<span class="inline-block bg-blue-950 text-blue-100 text-xs font-bold px-2 py-1 rounded-lg mr-2 mb-1 shadow-sm border border-blue-800 hover:bg-blue-900 hover:text-white transition">@p</span>
+								}
+							</td>
+							<td class="px-4 py-3">@c.NetworkMode</td>
+							<td class="px-4 py-3 flex flex-wrap gap-1 justify-end">
+								<form method="post" asp-action="Start" asp-route-id="@c.ID" class="inline">
+									<button type="submit" class="flex items-center justify-center px-2 py-1 bg-green-700/80 hover:bg-green-800 text-white text-xs font-bold rounded-lg shadow-sm transition">
+										<svg class="w-4 h-4 mr-1" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7" /></svg>Start
+									</button>
+								</form>
+								<form method="post" asp-action="Stop" asp-route-id="@c.ID" class="inline">
+									<button type="submit" class="flex items-center justify-center px-2 py-1 bg-yellow-600 hover:bg-yellow-800 text-white text-xs font-bold rounded-lg shadow-sm transition">
+										<svg class="w-4 h-4 mr-1" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12" /></svg>Stop
+									</button>
+								</form>
+								<form method="post" asp-action="Restart" asp-route-id="@c.ID" class="inline">
+									<button type="submit" class="flex items-center justify-center px-2 py-1 bg-blue-800 hover:bg-blue-900 text-white text-xs font-bold rounded-lg shadow-sm transition">
+										<svg class="w-4 h-4 mr-1" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M12 4v16m8-8H4" /></svg>Restart
+									</button>
+								</form>
+								<form method="post" asp-action="Remove" asp-route-id="@c.ID" class="inline">
+									<button type="submit" class="flex items-center justify-center px-2 py-1 bg-red-800 hover:bg-red-900 text-white text-xs font-bold rounded-lg shadow-sm transition"
+											onclick="return confirm('Remove this container?')">
+										<svg class="w-4 h-4 mr-1" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12" /></svg>Remove
+									</button>
+								</form>
+							</td>
+						</tr>
+					}
+				</tbody>
+			</table>
+		</div>
+
+		<!-- اکشن پایین -->
+		<div class="grid grid-cols-1 md:grid-cols-2 gap-8 mb-12">
+			<div class="bg-gradient-to-tr from-gray-900 via-blue-950 to-gray-900 rounded-3xl shadow-lg border border-blue-900 p-7 flex flex-col gap-3">
+				<h3 class="text-lg font-semibold mb-1 text-blue-200">🛠️ ساخت مجدد کانتینر از ایمیج</h3>
+				<form method="post" asp-action="RecreateFromImage" class="flex gap-2">
+					<input name="image" class="flex-1 rounded-xl border border-blue-900 px-4 py-2 focus:ring-2 focus:ring-blue-600 bg-gray-900/90 text-blue-100 placeholder:text-blue-400" placeholder="مثلاً nginx:latest" required />
+					<button class="px-4 py-2 bg-blue-800 text-white font-semibold rounded-xl shadow hover:bg-blue-900 transition">Recreate</button>
+				</form>
+			</div>
+			<div class="bg-gradient-to-tr from-gray-900 via-blue-950 to-gray-900 rounded-3xl shadow-lg border border-blue-900 p-7 flex flex-col gap-3">
+				<h3 class="text-lg font-semibold mb-1 text-blue-200">🧹 حذف همه کانتینرهای متوقف‌شده</h3>
+				<form method="post" asp-action="Prune">
+					<button type="submit" class="px-4 py-2 bg-red-800 text-white font-semibold rounded-xl shadow hover:bg-red-900 transition"
+							onclick="return confirm('همه کانتینرهای متوقف‌شده حذف شوند؟')">
+						Prune Now
+					</button>
+				</form>
+			</div>
+		</div>
+
+		<!-- چارت -->
+		<div class="max-w-2xl mx-auto bg-gradient-to-tr from-gray-900 via-blue-950 to-gray-900 rounded-3xl shadow-lg border border-blue-900 p-7 flex flex-col items-center mb-10">
+			<h3 class="text-lg font-semibold mb-3 text-blue-200">Container Images Usage</h3>
+			<canvas id="imageChart"></canvas>
+		</div>
 	</div>
 </div>
 
 @section Scripts {
-
 	<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 	<script>
+		// Box grow animation
+		document.querySelectorAll('.animate-grow').forEach(el => {
+			el.animate([{ transform: 'scale(0.8)' }, { transform: 'scale(1)' }], { duration: 700, fill: 'forwards' });
+		});
+		// Chart
 		const chartData = @Html.Raw(chartData);
 		const ctx = document.getElementById('imageChart').getContext('2d');
 		new Chart(ctx, {
@@ -161,8 +193,44 @@
 					data: Object.values(chartData),
 					backgroundColor: ['#4ade80','#60a5fa','#f87171','#facc15','#c084fc']
 				}]
+			},
+			options: {
+				plugins: { legend: { labels: { color: "#fff", font: { weight: 'bold', size: 16 } } } }
 			}
 		});
 	</script>
+}
 
+@section Css {
+	<style>
+		@@keyframes fade-in {
+			from {
+				opacity: 0;
+				transform: translateY(30px);
+			}
+
+			to {
+				opacity: 1;
+				transform: none;
+			}
+		}
+
+		.animate-fade-in {
+			animation: fade-in .8s cubic-bezier(.39,.58,.57,1);
+		}
+
+		@@keyframes grow {
+			from {
+				transform: scale(0.8);
+			}
+
+			to {
+				transform: scale(1);
+			}
+		}
+
+		.animate-grow {
+			animation: grow .7s cubic-bezier(.45,.75,.4,1);
+		}
+	</style>
 }
