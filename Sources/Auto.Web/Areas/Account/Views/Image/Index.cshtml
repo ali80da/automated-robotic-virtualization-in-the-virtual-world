@@ -2,54 +2,57 @@
 @model IList<ImagesListResponse>
 
 @{
-	ViewData["Title"] = $"ایمیج ها";
-
-
+    ViewData["Title"] = $"ایمیج‌ها";
 }
 
-<div class="container mx-auto p-6">
+<div class="w-full min-h-screen py-10 px-3 bg-gradient-to-tr from-gray-900 via-blue-950 to-gray-900">
+    <div class="max-w-5xl mx-auto">
+        <h2 class="text-3xl font-extrabold text-blue-300 text-center mb-10 drop-shadow tracking-tight">ایمیج‌ها 📦 Docker Images</h2>
 
-	<h2>ایمیج ها 📦 Docker Images</h2>
+        <!-- فرم Pull Image -->
+        <form method="post" asp-action="Pull"
+              class="flex flex-col md:flex-row gap-3 mb-8 items-center bg-white/5 p-5 rounded-2xl shadow-lg border border-blue-100 dark:border-blue-900 backdrop-blur">
+            <input name="image"
+                   class="flex-1 px-4 py-3 rounded-xl border border-blue-200 dark:border-blue-700 bg-white/70 dark:bg-gray-900/70 text-blue-900 dark:text-blue-100 placeholder:text-blue-400 text-base font-semibold transition"
+                   placeholder="مثلاً nginx:latest یا alpine" required />
+            <button type="submit"
+                    class="px-7 py-3 rounded-xl bg-blue-700 text-white font-bold shadow hover:bg-blue-900 transition text-base">
+                Pull Image
+            </button>
+        </form>
 
-	<!-- Pull Image Form -->
-	<form method="post" asp-action="Pull" class="row g-2 mb-4">
-		<div class="col-md-10">
-			<input name="image" class="form-control" placeholder="e.g. nginx:latest or alpine" required />
-		</div>
-		<div class="col-md-2">
-			<button type="submit" class="btn btn-primary w-100">Pull Image</button>
-		</div>
-	</form>
-
-	<!-- Image Table -->
-	<table class="table table-bordered table-striped">
-		<thead>
-			<tr>
-				<th>Repository</th>
-				<th>Tags</th>
-				<th>Size (MB)</th>
-				<th>Actions</th>
-			</tr>
-		</thead>
-		<tbody>
-			@foreach (var img in Model)
-			{
-				var repo = img.RepoTags?.FirstOrDefault()?.Split(':')[0] ?? "<none>";
-				var tag = img.RepoTags?.FirstOrDefault()?.Split(':')[1] ?? "<none>";
-				<tr>
-					<td>@repo</td>
-					<td>@tag</td>
-					<td>@(img.Size / 1024 / 1024) MB</td>
-					<td>
-						<form method="post" asp-controller="Image" asp-action="Remove" asp-route-id="@img.ID" onsubmit="return confirm('Remove this image?')">
-							<button class="btn btn-danger btn-sm">Remove</button>
-						</form>
-					</td>
-				</tr>
-			}
-		</tbody>
-	</table>
-
+        <!-- جدول ایمیج‌ها -->
+        <div class="overflow-x-auto rounded-2xl shadow-2xl border border-blue-100 dark:border-blue-900 bg-white/5 transition-all">
+            <table class="min-w-full divide-y divide-blue-100 dark:divide-blue-800 text-sm md:text-base text-center">
+                <thead class="bg-gradient-to-r from-blue-900 via-blue-800 to-gray-900 text-blue-100 text-xs uppercase font-bold">
+                    <tr>
+                        <th class="px-6 py-4">Repository</th>
+                        <th class="px-6 py-4">Tag</th>
+                        <th class="px-6 py-4">Size (MB)</th>
+                        <th class="px-6 py-4">Actions</th>
+                    </tr>
+                </thead>
+                <tbody class="divide-y divide-blue-50 dark:divide-blue-900 font-medium">
+                    @foreach (var img in Model)
+                    {
+                        var repo = img.RepoTags?.FirstOrDefault()?.Split(':')[0] ?? "<none>";
+                        var tag = img.RepoTags?.FirstOrDefault()?.Split(':')[1] ?? "<none>";
+                        <tr class="hover:bg-blue-900/40 transition group">
+                            <td class="px-6 py-4 font-bold text-blue-300 group-hover:scale-105">@repo</td>
+                            <td class="px-6 py-4 text-blue-200">@tag</td>
+                            <td class="px-6 py-4 text-blue-100">@((img.Size / 1024 / 1024).ToString("0.#"))</td>
+                            <td class="px-6 py-4">
+                                <form method="post" asp-controller="Image" asp-action="Remove" asp-route-id="@img.ID"
+                                      onsubmit="return confirm('Remove this image?')" class="inline">
+                                    <button class="px-4 py-2 rounded-lg bg-red-700 text-white font-semibold hover:bg-red-900 transition shadow text-xs">
+                                        Remove
+                                    </button>
+                                </form>
+                            </td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+    </div>
 </div>
-
-

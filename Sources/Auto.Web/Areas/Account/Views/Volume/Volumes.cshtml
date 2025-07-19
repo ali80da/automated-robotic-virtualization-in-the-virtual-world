@@ -1,57 +1,55 @@
 ﻿@model IList<VolumeViewModel>
 
 @{
-	ViewData["Title"] = $"والیوم ها";
+    ViewData["Title"] = $"والیوم‌ها";
 }
 
-<div class="container mx-auto p-6">
+<div class="w-full min-h-screen py-10 px-3 bg-gradient-to-tr from-gray-900 via-blue-950 to-gray-900">
+    <div class="max-w-4xl mx-auto">
+        <h2 class="text-3xl font-extrabold text-blue-300 text-center mb-10 drop-shadow tracking-tight">
+            داکر والیوم‌ها 📦 Docker Volumes
+        </h2>
 
-	<h2>داکر والیوم 📦 Docker Volumes</h2>
+        <!-- دکمه پاک‌سازی والیوم‌های بلااستفاده -->
+        <form method="post" asp-action="PruneVolumes"
+              class="flex justify-end mb-7">
+            <button type="submit"
+                    class="px-6 py-2 rounded-xl bg-red-700 text-white font-bold shadow hover:bg-red-900 transition text-base"
+                    onclick="return confirm('Remove all unused volumes?')">
+                🧹 Prune Dangling Volumes
+            </button>
+        </form>
 
-	<!-- Form to prune dangling volumes -->
-	<form method="post" asp-action="PruneVolumes" class="mb-3">
-		<button class="btn btn-danger" onclick="return confirm('Remove all unused volumes?')">
-			Prune Dangling Volumes
-		</button>
-	</form>
-
-	<!-- Table displaying list of volumes -->
-	<table class="table table-bordered">
-		<thead>
-			<tr>
-				<th>Name</th>
-				<th>Driver</th>
-				<th>Mountpoint</th>
-				<th>Actions</th>
-			</tr>
-		</thead>
-		<tbody>
-			@foreach (var volume in Model)
-			{
-				<tr>
-					<td>@volume.Name</td>
-					<td>@volume.Driver</td>
-					<td>@volume.Mountpoint</td>
-					<td>
-						<form method="post" asp-action="RemoveVolume" asp-route-name="@volume.Name" onsubmit="return confirm('Delete this volume?')">
-							<button class="btn btn-sm btn-danger">Remove</button>
-						</form>
-					</td>
-				</tr>
-			}
-		</tbody>
-	</table>
-
-
-
-
-
+        <!-- جدول والیوم‌ها -->
+        <div class="overflow-x-auto rounded-2xl shadow-2xl border border-blue-100 dark:border-blue-900 bg-white/5 transition-all">
+            <table class="min-w-full divide-y divide-blue-100 dark:divide-blue-800 text-sm md:text-base text-center">
+                <thead class="bg-gradient-to-r from-blue-900 via-blue-800 to-gray-900 text-blue-100 text-xs uppercase font-bold">
+                    <tr>
+                        <th class="px-6 py-4">Name</th>
+                        <th class="px-6 py-4">Driver</th>
+                        <th class="px-6 py-4">Mountpoint</th>
+                        <th class="px-6 py-4">Actions</th>
+                    </tr>
+                </thead>
+                <tbody class="divide-y divide-blue-50 dark:divide-blue-900 font-medium">
+                    @foreach (var volume in Model)
+                    {
+                        <tr class="hover:bg-blue-900/40 transition group">
+                            <td class="px-6 py-4 font-bold text-blue-300 group-hover:scale-105">@volume.Name</td>
+                            <td class="px-6 py-4 text-blue-200">@volume.Driver</td>
+                            <td class="px-6 py-4 text-blue-100 text-left max-w-xs truncate" title="@volume.Mountpoint">@volume.Mountpoint</td>
+                            <td class="px-6 py-4">
+                                <form method="post" asp-action="RemoveVolume" asp-route-name="@volume.Name"
+                                      onsubmit="return confirm('Delete this volume?')" class="inline">
+                                    <button class="px-4 py-2 rounded-lg bg-red-700 text-white font-semibold hover:bg-red-900 transition shadow text-xs">
+                                        Remove
+                                    </button>
+                                </form>
+                            </td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+    </div>
 </div>
-
-
-
-
-
-
-
-

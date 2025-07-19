@@ -1,55 +1,62 @@
 ﻿@model IList<NetworkViewModel>
 @{
-	ViewData["Title"] = $"شبکه   ها";
+    ViewData["Title"] = $"شبکه‌ها";
 }
 
-<div class="container mx-auto p-6">
+<div class="w-full min-h-screen py-10 px-3 bg-gradient-to-tr from-gray-900 via-blue-950 to-gray-900">
+    <div class="max-w-4xl mx-auto">
+        <h2 class="text-3xl font-extrabold text-blue-300 text-center mb-10 drop-shadow tracking-tight">
+            شبکه‌های داکر 🌐 Docker Networks
+        </h2>
 
-    <h2>شبکه‌های داکر 🌐 Docker Networks</h2>
-
-    <!-- Form to create a new network -->
-    <form method="post" asp-action="CreateNetwork" class="row g-2 mb-4">
-        <div class="col-md-5">
-            <input name="name" class="form-control" placeholder="Network name" required />
-        </div>
-        <div class="col-md-4">
-            <select name="driver" class="form-select">
+        <!-- فرم ایجاد شبکه جدید -->
+        <form method="post" asp-action="CreateNetwork"
+              class="flex flex-col md:flex-row gap-3 mb-8 items-center bg-white/5 p-5 rounded-2xl shadow-lg border border-blue-100 dark:border-blue-900 backdrop-blur">
+            <input name="name"
+                   class="flex-1 px-4 py-3 rounded-xl border border-blue-200 dark:border-blue-700 bg-white/70 dark:bg-gray-900/70 text-blue-900 dark:text-blue-100 placeholder:text-blue-400 text-base font-semibold transition"
+                   placeholder="Network name..." required />
+            <select name="driver"
+                    class="flex-1 px-4 py-3 rounded-xl border border-blue-200 dark:border-blue-700 bg-white/70 dark:bg-gray-900/70 text-blue-900 dark:text-blue-100 text-base font-semibold">
                 <option value="bridge">bridge</option>
                 <option value="host">host</option>
                 <option value="overlay">overlay</option>
             </select>
+            <button type="submit"
+                    class="px-7 py-3 rounded-xl bg-blue-700 text-white font-bold shadow hover:bg-blue-900 transition text-base">
+                Create Network
+            </button>
+        </form>
+
+        <!-- جدول لیست شبکه‌ها -->
+        <div class="overflow-x-auto rounded-2xl shadow-2xl border border-blue-100 dark:border-blue-900 bg-white/5 transition-all">
+            <table class="min-w-full divide-y divide-blue-100 dark:divide-blue-800 text-sm md:text-base text-center">
+                <thead class="bg-gradient-to-r from-blue-900 via-blue-800 to-gray-900 text-blue-100 text-xs uppercase font-bold">
+                    <tr>
+                        <th class="px-6 py-4">Name</th>
+                        <th class="px-6 py-4">Driver</th>
+                        <th class="px-6 py-4">Scope</th>
+                        <th class="px-6 py-4">Actions</th>
+                    </tr>
+                </thead>
+                <tbody class="divide-y divide-blue-50 dark:divide-blue-900 font-medium">
+                    @foreach (var network in Model)
+                    {
+                        <tr class="hover:bg-blue-900/40 transition group">
+                            <td class="px-6 py-4 font-bold text-blue-300 group-hover:scale-105">@network.Name</td>
+                            <td class="px-6 py-4 text-blue-200">@network.Driver</td>
+                            <td class="px-6 py-4 text-blue-100">@network.Scope</td>
+                            <td class="px-6 py-4">
+                                <form method="post" asp-action="RemoveNetwork" asp-route-id="@network.ID"
+                                      onsubmit="return confirm('Remove this network?')" class="inline">
+                                    <button class="px-4 py-2 rounded-lg bg-red-700 text-white font-semibold hover:bg-red-900 transition shadow text-xs">
+                                        Remove
+                                    </button>
+                                </form>
+                            </td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
         </div>
-        <div class="col-md-3">
-            <button class="btn btn-primary w-100">Create Network</button>
-        </div>
-    </form>
-
-    <!-- Table displaying list of networks -->
-    <table class="table table-striped">
-        <thead>
-            <tr>
-                <th>Name</th>
-                <th>Driver</th>
-                <th>Scope</th>
-                <th>Actions</th>
-            </tr>
-        </thead>
-        <tbody>
-            @foreach (var network in Model)
-            {
-                <tr>
-                    <td>@network.Name</td>
-                    <td>@network.Driver</td>
-                    <td>@network.Scope</td>
-                    <td>
-                        <form method="post" asp-action="RemoveNetwork" asp-route-id="@network.ID" onsubmit="return confirm('Remove this network?')">
-                            <button class="btn btn-danger btn-sm">Remove</button>
-                        </form>
-                    </td>
-                </tr>
-            }
-        </tbody>
-    </table>
-
-
+    </div>
 </div>
