@@ -1,4 +1,7 @@
-﻿<!DOCTYPE html>
+﻿@{
+	
+}
+<!DOCTYPE html>
 <html class="dark" lang="fa">
 <head>
 	<meta charset="utf-8">
@@ -18,6 +21,7 @@
 	@await RenderSectionAsync("Css", false).ConfigureAwait(false)
 </head>
 <body class="bg-gray-800 text-gray-400 antialiased min-h-screen flex flex-col">
+
 	<div class="">
 
 		<!-- main-area -->
@@ -30,6 +34,7 @@
 		</footer>
 	</div>
 
+	@await Html.PartialAsync("Partials/Docker/_DockerStatusModal")
 
 	@await RenderSectionAsync("Scripts", false).ConfigureAwait(false)
 </body>

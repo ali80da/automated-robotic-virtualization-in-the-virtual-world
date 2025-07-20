@@ -2,10 +2,11 @@
 using Auto.Core.Services.Docker;
 using Auto.Core.Services.StatusChecker;
 using Auto.Web.Hubs;
+using Auto.Web.Middlewares.Docker;
 
 var builder = WebApplication.CreateBuilder(args);
 {
-
+    Console.WriteLine("217 133 216 172 216 167 216 178 219 140 226 128 140 216 179 216 167 216 178 219 140 32 216 174 217 136 216 175 218 169 216 167 216 177 32 216 177 216 168 216 167 216 170 219 140 218 169 32 216 175 216 177 32 216 175 217 134 219 140 216 167 219 140 32 217 133 216 172 216 167 216 178 219 140 ");
 
     builder.Services.AddControllersWithViews();
 
@@ -71,6 +72,9 @@ var app = builder.Build();
 
     //app.UseCors("AllowAll");
     app.UseHttpsRedirection();
+
+    app.UseMiddleware<DockerStatusMiddleware>();
+
 
     app.UseAuthentication();
     app.UseAuthorization();

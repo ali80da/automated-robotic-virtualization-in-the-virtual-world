@@ -1,0 +1,69 @@
+﻿@{
+    var dockerStatus = Context.Items["DockerStatus"] as dynamic;
+    bool showModal = dockerStatus != null && (!dockerStatus.IsInstalled || !dockerStatus.IsRunning);
+}
+
+@if (showModal)
+{
+    <div id="dockerModalBackdrop" class="fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center px-4" onclick="closeDockerModal()">
+        <div class="bg-white rounded-2xl shadow-2xl w-full max-w-lg p-6 relative text-gray-800" onclick="event.stopPropagation();">
+
+            <div class="flex items-center gap-3 mb-4">
+                <div class="bg-yellow-100 text-yellow-600 p-2 rounded-full">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                              d="M13 16h-1v-4h-1m1-4h.01M12 20a8 8 0 100-16 8 8 0 000 16z" />
+                    </svg>
+                </div>
+                <h2 class="text-lg font-semibold text-gray-900">Docker Status</h2>
+            </div>
+
+            @if (!dockerStatus.IsInstalled)
+            {
+                <p class="text-sm mb-6 text-red-600">❌ Docker is <strong>not installed</strong> on this system.</p>
+                <form asp-controller="Docker" asp-action="InstallDocker" method="post">
+                    <button type="submit" class="w-full bg-blue-600 hover:bg-blue-700 text-white py-2 rounded-lg font-medium transition">
+                        ⬇️ Install Docker
+                    </button>
+                </form>
+            }
+            else if (!dockerStatus.IsRunning)
+            {
+                <p class="text-sm mb-6 text-yellow-700">⚠️ Docker is installed but <strong>not running</strong>.</p>
+                <div class="space-y-2">
+                    <form asp-controller="Docker" asp-action="StartDocker" method="post">
+                        <button type="submit" class="w-full bg-green-600 hover:bg-green-700 text-white py-2 rounded-lg font-medium transition">
+                            ▶️ Start Docker
+                        </button>
+                    </form>
+                    <form asp-controller="Docker" asp-action="RestartDocker" method="post">
+                        <button type="submit" class="w-full bg-yellow-500 hover:bg-yellow-600 text-white py-2 rounded-lg font-medium transition">
+                            🔄 Restart Docker
+                        </button>
+                    </form>
+                </div>
+            }
+
+            <div class="mt-6 flex justify-between text-sm text-gray-500">
+                <form asp-controller="Docker" asp-action="RefreshDockerStatus" method="post">
+                    <button type="submit" class="hover:underline text-blue-600">🔁 Refresh Status</button>
+                </form>
+                <button onclick="closeDockerModal()" class="hover:underline text-gray-600">✖️ Close</button>
+            </div>
+
+            <button onclick="closeDockerModal()" class="absolute top-3 right-4 text-gray-400 hover:text-gray-600 text-2xl leading-none">&times;</button>
+        </div>
+    </div>
+
+    <script>
+        function closeDockerModal() {
+            document.getElementById("dockerModalBackdrop")?.remove();
+        }
+
+        document.addEventListener('keydown', function (event) {
+            if (event.key === "Escape") {
+                closeDockerModal();
+            }
+        });
+    </script>
+}

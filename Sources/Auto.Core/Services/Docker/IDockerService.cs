@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
+using System.Runtime.InteropServices;
 using System.Text;
 using System.Text.Json;
 using System.Threading.Tasks;
@@ -14,6 +15,27 @@ namespace Auto.Core.Services.Docker;
 
 public interface IDockerService
 {
+
+    #region Docker Availability Check
+
+    /// <summary>
+    /// Check if Docker is installed on the system.
+    /// </summary>
+    bool IsDockerInstalled();
+
+    /// <summary>
+    /// Check if Docker Engine is running and responsive.
+    /// </summary>
+    Task<bool> IsDockerRunningAsync();
+
+    /// <summary>
+    /// Try to start Docker (e.g., Docker Desktop on Windows).
+    /// </summary>
+    void TryStartDocker();
+
+    #endregion
+
+
     #region Container Listing
 
     /// <summary>
@@ -176,6 +198,102 @@ public interface IDockerService
 public class DockerService : IDockerService
 {
     private readonly DockerClient DockerClient = DockerClientFactory.Create();
+
+    #region OS Detection
+
+    private static bool IsWindows() => RuntimeInformation.IsOSPlatform(OSPlatform.Windows);
+    private static bool IsLinux() => RuntimeInformation.IsOSPlatform(OSPlatform.Linux);
+    private static bool IsMacOS() => RuntimeInformation.IsOSPlatform(OSPlatform.OSX);
+
+    #endregion
+
+    #region Docker Checks
+
+    /// <summary>
+    /// Checks whether Docker is installed based on common install paths.
+    /// </summary>
+    public bool IsDockerInstalled()
+    {
+        if (IsWindows())
+        {
+            var dockerExe = Environment.ExpandEnvironmentVariables(@"%ProgramFiles%\Docker\Docker\Docker Desktop.exe");
+            return File.Exists(dockerExe);
+        }
+        else if (IsLinux() || IsMacOS())
+        {
+            return File.Exists("/usr/bin/docker") || File.Exists("/usr/local/bin/docker");
+        }
+
+        return false;
+    }
+
+    /// <summary>
+    /// Tries to check if Docker is running by calling `docker info`.
+    /// </summary>
+    public async Task<bool> IsDockerRunningAsync()
+    {
+        try
+        {
+            var psi = new ProcessStartInfo
+            {
+                FileName = "docker",
+                Arguments = "info",
+                RedirectStandardOutput = true,
+                RedirectStandardError = true,
+                UseShellExecute = false,
+                CreateNoWindow = true
+            };
+
+            using var process = Process.Start(psi);
+            if (process == null) return false;
+            await process.WaitForExitAsync();
+
+            return process.ExitCode == 0;
+        }
+        catch
+        {
+            return false;
+        }
+    }
+
+    /// <summary>
+    /// Attempts to start Docker if installed but not running.
+    /// </summary>
+    public void TryStartDocker()
+    {
+        if (IsWindows())
+        {
+            var dockerPath = Environment.ExpandEnvironmentVariables(@"%ProgramFiles%\Docker\Docker\Docker Desktop.exe");
+            if (File.Exists(dockerPath))
+            {
+                Process.Start(new ProcessStartInfo
+                {
+                    FileName = dockerPath,
+                    UseShellExecute = true
+                });
+            }
+        }
+        else if (IsLinux())
+        {
+            Process.Start(new ProcessStartInfo
+            {
+                FileName = "bash",
+                Arguments = "-c \"sudo systemctl start docker\"",
+                UseShellExecute = false
+            });
+        }
+        else if (IsMacOS())
+        {
+            Process.Start(new ProcessStartInfo
+            {
+                FileName = "open",
+                Arguments = "-a Docker",
+                UseShellExecute = true
+            });
+        }
+    }
+
+    #endregion
 
     #region Container Listing
 
