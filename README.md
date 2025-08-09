@@ -108,7 +108,7 @@ This project is actively evolving, with new features being gradually added to im
 
 ```bash
 git clone https://github.com/ali80da/virtualization-in-the-virtual-world.git
-cd automated-robotic-virtualization-in-the-virtual-world
+cd virtualization-in-the-virtual-world
 docker-compose up --build
 
 
