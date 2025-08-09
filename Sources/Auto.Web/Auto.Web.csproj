@@ -14,7 +14,7 @@
 	</ItemGroup>
 
 	<ItemGroup>
-		<Folder Include="Areas\Account\Views\Shared\" />
+		<Folder Include="Areas\V01\Account\Views\Shared\" />
 		<Folder Include="Views\Home\Show\" />
 	</ItemGroup>
 

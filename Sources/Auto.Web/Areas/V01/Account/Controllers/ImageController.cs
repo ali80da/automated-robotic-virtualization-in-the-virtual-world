@@ -1,9 +1,9 @@
 ﻿using Auto.Core.Services.Docker;
 using Microsoft.AspNetCore.Mvc;
 
-namespace Auto.Web.Areas.Account.Controllers;
+namespace Auto.Web.Areas.V01.Account.Controllers;
 
-public class ImageController(IDockerService DockerService) : SharedAccController
+public class ImageController(IDockerService DockerService) : SharedAcc01Controller
 {
 
     private readonly IDockerService DockerService = DockerService;

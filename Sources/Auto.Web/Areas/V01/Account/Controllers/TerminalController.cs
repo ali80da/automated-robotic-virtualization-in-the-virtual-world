@@ -1,8 +1,8 @@
 ﻿using Microsoft.AspNetCore.Mvc;
 
-namespace Auto.Web.Areas.Account.Controllers;
+namespace Auto.Web.Areas.V01.Account.Controllers;
 
-public class TerminalController : SharedAccController
+public class TerminalController : SharedAcc01Controller
 {
 
 
